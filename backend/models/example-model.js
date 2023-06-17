@@ -1,9 +1,12 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const MODEL_NAME = "Example";
 
-var exampleSchema = new mongoose.Schema({
-	name: String,
-	data: Number,
-}, 
-{ collation: { locale: 'en_US', strength: 2 }, timestamps: true});
+let exampleSchema = new mongoose.Schema(
+	{
+		name: String,
+		data: Number,
+	},
+	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }
+);
 
-mongoose.model('Example', exampleSchema);
+mongoose.model(MODEL_NAME, exampleSchema);

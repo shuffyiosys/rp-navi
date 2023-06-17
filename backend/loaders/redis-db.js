@@ -1,56 +1,51 @@
-const util = require('util');
-const redis = require('redis');
-const {
-	logger
-} = require('../utils/logger');
+/**
+ * @file Establishes different clients to connect to a Redis server
+ */
+
+const util = require("util");
+const redis = require("redis");
+const { logger } = require("../utils/logger");
 
 const clients = {};
 let connectionTimeout = null;
 
-function throwTimeoutError() {
-	connectionTimeout = setTimeout(() => {
-		throw new Error(`Error connecting to Redis`);
-	}, 10000)
-}
-
-function startClient(config, clientName, promisify=false) {
-	logger.info(`Connecting to Redis...`)
-	if ((clientName in clients) === false) {
-		let params = {
-			host: config.username,
-			port: config.port
-		};
-		
-		if ('password' in config && config.password.length > 0) {
-			params.password = config.password;
-		}
-
-		const newClient = redis.createClient(params);
-		newClient.clientName = clientName;
-
-		clients[clientName] = newClient;
-		
-		if(promisify === true) {
-			promisifyFunctions(newClient);
-		}
-
-		setupEventListeners({
-			conn: newClient
-		})
-	} else {
-		logger.error(`Redis client ${clientName} already exists. ` +
-			`Abort setting up a connection`);
+function startClient(config, clientName, promisify = false) {
+	logger.info(`Connecting to Redis...`);
+	if (clientName in clients === true) {
+		logger.error(`Redis client ${clientName} already exists. Abort setting up a connection`);
+		return null;
 	}
+
+	let params = {
+		host: config.username,
+		port: config.port,
+	};
+
+	if ("password" in config && config.password.length > 0) {
+		params.password = config.password;
+	}
+
+	const newClient = redis.createClient(params);
+	newClient.clientName = clientName;
+
+	clients[clientName] = newClient;
+
+	if (promisify === true) {
+		promisifyFunctions(newClient);
+	}
+
+	setupEventListeners({ conn: newClient });
+	return newClient;
 }
 
 function connectionExists(clientName) {
-	return (clientName in clients);
+	return clientName in clients;
 }
 
 async function closeConnections() {
 	Object.keys(clients).forEach(async function (client) {
 		await clients[client].quit();
-	})
+	});
 }
 
 function promisifyFunctions(client) {
@@ -70,25 +65,31 @@ function promisifyFunctions(client) {
 	client.exists = util.promisify(client.exists);
 }
 
-function setupEventListeners({conn}) {
-	conn.on('connect', () => {
+function setupEventListeners({ conn }) {
+	conn.on("connect", () => {
 		logger.info(`[Redis] ${conn.clientName} - Connection status: connected`);
 		clearTimeout(connectionTimeout);
 	});
-	conn.on('end', () => {
+	conn.on("end", () => {
 		logger.info(`[Redis] ${conn.clientName} - Connection status: disconnected`);
 		delete clients[conn.clientName];
 	});
-	conn.on('reconnecting', () => {
+	conn.on("reconnecting", () => {
 		logger.info(`[Redis] ${conn.clientName} - Connection status: reconnecting`);
 		clearTimeout(connectionTimeout);
 	});
-	conn.on('error', (err) => {
+	conn.on("error", (err) => {
 		logger.info(`[Redis] ${conn.clientName} - Connection status: error`, {
-			err
+			err,
 		});
 		throwTimeoutError();
 	});
+}
+
+function throwTimeoutError() {
+	connectionTimeout = setTimeout(() => {
+		throw new Error(`Error connecting to Redis`);
+	}, 10000);
 }
 
 function getClient(clientName) {
@@ -103,5 +104,5 @@ module.exports = {
 	startClient,
 	connectionExists,
 	getClient,
-	closeConnections
-}
+	closeConnections,
+};

@@ -3,7 +3,7 @@
  * 
  */
 const router = require('express').Router()
-const { RenderData } = require('../utils/render-data');
+const { RenderData } = require('../classes/render-data');
 
 const basepath = '/';
 
