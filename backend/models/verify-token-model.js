@@ -4,6 +4,8 @@
 const mongoose = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 
+const Schema = mongoose.Schema;
+const ObjectId = Schema.ObjectId;
 /** Database schema for verification tokens
  * @property {String} token - "Unique" string generated as the token ID
  * @property {Number} action - Which action this token is performing

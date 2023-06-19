@@ -4,7 +4,7 @@ const https = require('https');
 const path = require('path');
 const fs = require('fs');
 const { logger } = require('../utils/logger');
-const { RenderData } = require('../utils/render-data');
+const { RenderData } = require('../classes/render-data');
 
 function load(app, config) {
 	// catch 404 and forward to error handler
@@ -43,7 +43,6 @@ function load(app, config) {
 
 	/* Create and start server ***************************************************/
 	if (config.certs.certFile && config.certs.keyFile) {
-		
 		let server = http.createServer(app);
 		const certFilename = path.join(__dirname, '..', config.certs.path, config.certs.certFile);
 		const keyFilename = path.join(__dirname, '..', config.certs.path, config.certs.keyFile);

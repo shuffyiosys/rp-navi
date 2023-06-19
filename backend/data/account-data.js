@@ -10,6 +10,6 @@ const PERMISSION_LEVELS = Object.freeze({
 	BANNED: -3,
 });
 
-module.export = {
+module.exports = {
 	PERMISSION_LEVELS,
 };

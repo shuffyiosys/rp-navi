@@ -8,9 +8,14 @@ function load(app) {
 	files.forEach(file => {
 		const filepath = path.join(staticRoutesPath, file);
 		const router = require(filepath);
-		
-		logger.debug(`Loading route ${router.basepath} from ${filepath}`);
-		app.use(`${router.basepath}`, router.router);
+
+		try {
+			logger.debug(`Loading route ${router.basepath} from ${filepath}`);
+			app.use(`${router.basepath}`, router.router);
+		}
+		catch (e) {
+			logger.error(`Error in using route file ${filepath}: ${e}`);
+		}
 	})
 }
 

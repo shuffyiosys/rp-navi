@@ -10,6 +10,7 @@ logger.debug(`Config: ${formatJson(config)}`);
 
 /* Setup DB ******************************************************************/
 require('./loaders/mongo-db').setup(config.database.mongo);
+require('./loaders/mongo-db').initModels();
 
 /* Create Express Instance ***************************************************/
 const express = require('express');

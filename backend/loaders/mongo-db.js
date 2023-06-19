@@ -2,8 +2,10 @@
  * @file Handles connecting to, disconnecting, and basic statusing of a MongoDB
  * 			server.
  */
-const {logger} = require('../utils/logger')
-const mongoose = require('mongoose')
+const {logger} = require('../utils/logger');
+const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Sets up a MongoDB connection and registers the schemas.
@@ -50,6 +52,20 @@ async function setup(dbParameters){
 	.catch(err => { logger.error(err)});
 }
 
+function initModels() {
+	const staticRoutesPath = path.join(__dirname, '..', 'models');
+	const files = fs.readdirSync(staticRoutesPath);
+	files.forEach(file => {
+		const filepath = path.join(staticRoutesPath, file);
+		try {
+			require(filepath);
+		}
+		catch (e) {
+			logger.error(`Error in loading model file ${filepath}: ${e}`);
+		}
+	});
+}
+
 /**
  * Gets the connection state to the database
  * @returns MongoDB connection state
@@ -67,6 +83,7 @@ async function closeConnection() {
 
 module.exports = {
 	setup,
+	initModels,
 	getConnectionState,
 	closeConnection
 }

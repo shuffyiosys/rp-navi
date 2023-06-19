@@ -5,6 +5,9 @@ const mongoose = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 const { PERMISSION_LEVELS } = require("../data/account-data");
 
+const Schema = mongoose.Schema;
+const ObjectId = Schema.ObjectId;
+
 /** Database schema for accounts
  * @property {String} email - Email of the account. This is what they use to login and is the primary key
  * @property {String} password - Password to authenticate. This should be hashed

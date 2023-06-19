@@ -3,6 +3,7 @@
  *
  */
 const router = require("express").Router();
+const {check} = require('express-validator/check');
 
 const {
 	createAccount,
@@ -11,10 +12,8 @@ const {
 	authenticateUser,
 	updateEmail,
 	updatePassword,
-	deactivateAccount,
 	deleteAccount,
 } = require("../controllers/account-controller");
-const { RenderData } = require("../utils/render-data");
 
 const basepath = "/account";
 
@@ -22,17 +21,34 @@ const basepath = "/account";
 router.get("/data", getAccountData);
 
 /* POST routers **************************************************************/
+router.post("/create", [
+	check('email', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
+	check('password', 'Password must be at least 6 characters in length').notEmpty().isLength({min: 5})
+	],
+	createAccount);
+
 router.post("/logout", logoutAccount);
 
-router.post("/create", createAccount);
+router.post("/login", [
+	check('email', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
+	check('password', 'No password entered').notEmpty()
+	],
+	authenticateUser);
 
-router.post("/login", authenticateUser);
+router.post("/update-password", [
+	check('password', 'No password entered').notEmpty(),
+	check('newPassword', 'Password must be at least 6 characters in length').notEmpty().isLength({min: 5})
+	],
+	updatePassword);
 
-router.post("/update-password", updatePassword);
+router.post("/update-email", [
+	check('newEmail', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
+	check('password', 'No password entered').notEmpty()
+	],
+ 	updateEmail);
 
-router.post("/update-email", updateEmail);
-
-router.post("/delete", deleteAccount);
+router.post("/delete", [check('password', 'No password entered').notEmpty()],
+	deleteAccount);
 
 module.exports = {
 	router,

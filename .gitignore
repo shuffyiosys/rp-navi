@@ -127,3 +127,4 @@ dist
 .pnp.*
 
 backend/node_modules
+docs/jsdoc

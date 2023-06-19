@@ -4,6 +4,8 @@
 const mongoose = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 
+const Schema = mongoose.Schema;
+const ObjectId = Schema.ObjectId;
 /** Database schema for characters
 
  */
