@@ -1,7 +1,7 @@
 /**
  * @file Utility fucntions related to routing and web page rendering.1
  */
-class RenderData {
+class PageRenderParams {
 	constructor(title, session, locals) {
 		this.headTitle = `${title}`;
 		this.title = `${title}`;
@@ -12,5 +12,5 @@ class RenderData {
 }
 
 module.exports = {
-	RenderData,
+	PageRenderParams,
 };

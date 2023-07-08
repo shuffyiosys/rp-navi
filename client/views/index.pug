@@ -1,1 +1,61 @@
-h1 Hello world!
+doctype html
+html 
+	head
+		title="Index"
+		script(src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous") 
+		script(src="./js/index_test.js" defer)
+		link(rel="stylesheet", href="./css/index.css")
+	body 
+		div.formStyle
+			p Messages
+			ul#statusMessage
+		div.content
+			div.formStyle
+				p Sign up
+				label Email: 
+					input#signupEmail(type="text")
+				br
+				label Password: 
+					input#signupPassword(type="password")
+				br
+				br
+				button#signupSubmit(style="margin-right: 0.5rem;") Sign up
+				button#loginSubmit Login
+
+			div.formStyle
+				p Log out
+				button#logOutBtn Logout
+
+			div.formStyle
+				p Get account data
+				button#getData Get Data
+			
+			div.formStyle
+				p Change email
+				label Current Password: 
+					input#currentPasswordInput(type="password")
+				br
+				label New Email: 
+					input#newEmailInput(type="email")
+				br
+				button#updateEmail Update
+
+			div.formStyle
+				p Change password
+				label Current Password: 
+					input#currentPasswordInput(type="password")
+				br
+				label New Password:
+					input#newPasswordInput(type="password")
+				br
+				br
+				button#updatepasswordBtn Update
+			
+			div.formStyle
+				p Delete account
+				label Current Password: 
+					input#currentPasswordInput(type="password")
+				br
+				br
+				button#deleteAccountBtn Delete
+			

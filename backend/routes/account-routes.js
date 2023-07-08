@@ -3,13 +3,13 @@
  *
  */
 const router = require("express").Router();
-const {check} = require('express-validator/check');
+const { check } = require("express-validator/check");
 
 const {
 	createAccount,
 	getAccountData,
 	logoutAccount,
-	authenticateUser,
+	loginAccount,
 	updateEmail,
 	updatePassword,
 	deleteAccount,
@@ -21,34 +21,45 @@ const basepath = "/account";
 router.get("/data", getAccountData);
 
 /* POST routers **************************************************************/
-router.post("/create", [
-	check('email', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
-	check('password', 'Password must be at least 6 characters in length').notEmpty().isLength({min: 5})
+router.post(
+	"/create",
+	[
+		check("email", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
+		check("password", "Password must be at least 6 characters in length").notEmpty().isLength({ min: 5 }),
 	],
-	createAccount);
+	createAccount
+);
 
 router.post("/logout", logoutAccount);
 
-router.post("/login", [
-	check('email', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
-	check('password', 'No password entered').notEmpty()
+router.post(
+	"/login",
+	[
+		check("email", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
+		check("password", "No password entered").notEmpty(),
 	],
-	authenticateUser);
+	loginAccount
+);
 
-router.post("/update-password", [
-	check('password', 'No password entered').notEmpty(),
-	check('newPassword', 'Password must be at least 6 characters in length').notEmpty().isLength({min: 5})
+router.post(
+	"/update-password",
+	[
+		check("password", "No password entered").notEmpty(),
+		check("newPassword", "Password must be at least 6 characters in length").notEmpty().isLength({ min: 5 }),
 	],
-	updatePassword);
+	updatePassword
+);
 
-router.post("/update-email", [
-	check('newEmail', 'Email address is not valid').notEmpty().isEmail().normalizeEmail(),
-	check('password', 'No password entered').notEmpty()
+router.post(
+	"/update-email",
+	[
+		check("newEmail", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
+		check("password", "No password entered").notEmpty(),
 	],
- 	updateEmail);
+	updateEmail
+);
 
-router.post("/delete", [check('password', 'No password entered').notEmpty()],
-	deleteAccount);
+router.post("/delete", [check("password", "No password entered").notEmpty()], deleteAccount);
 
 module.exports = {
 	router,
