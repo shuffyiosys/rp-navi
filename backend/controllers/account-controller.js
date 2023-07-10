@@ -3,10 +3,11 @@
  * @brief Handles the input requests and outgoing responses for account related functionality
  */
 const config = require("../config/config")();
-const { format } = require("winston");
 const service = require("../services/account-service");
 const { logger, formatJson } = require("../utils/logger");
 const { validationResult } = require("express-validator/check");
+const { AjaxResponse } = require("../classes/ajax-response");
+const { format } = require("winston");
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -18,7 +19,16 @@ function createSession(req, res, accountId) {
 	res.cookie(config.session.name, "value", { account: accountId });
 	req.session.userId = accountId;
 	req.session.save();
-	logger.debug(req.session.userId);
+	logger.debug(`[createSession] ${req.session.userId}`);
+}
+
+function destroySession(req, res) {
+	req.session.destroy((err) => {
+		if (err) {
+			logger.error(err);
+		}
+		res.status(200);
+	});
 }
 
 /**
@@ -74,17 +84,7 @@ async function getAccountData(req, res) {
  * @param {*} res
  */
 async function logoutAccount(req, res) {
-	if ("session" in req === false) {
-		res.status(200);
-		return;
-	}
-
-	req.session.destroy((err) => {
-		if (err) {
-			logger.error(err);
-		}
-		res.status(200);
-	});
+	destroySession(req, res);
 }
 
 /**
@@ -94,19 +94,17 @@ async function logoutAccount(req, res) {
  */
 async function loginAccount(req, res) {
 	const errors = validationResult(req);
-	logger.debug(formatJson(req.session));
 	if (errors.isEmpty() === false) {
 		res.json(errors.array());
 		return;
-	} else if ("userId" in req.session && req.session.userId) {
-		res.json({ type: "error", msg: "User is already logged in" });
+	} else if ("userId" in req.session) {
+		res.json({ msg: "Already logged in" });
 		return;
 	}
-
 	const body = req.body;
-	const accountData = await service.authenticateUser(body.username, body.password);
-	if (accountData !== null) {
-		createSession(req, res, accountData.id);
+	const accountData = await service.authenticateUser(body.email, body.password);
+	if (accountData.success === true) {
+		createSession(req, res, accountData.accountId);
 		res.json({ msg: "Login successful" });
 	} else {
 		res.json({ msg: "Login error" });
@@ -119,22 +117,25 @@ async function loginAccount(req, res) {
  * @param {*} res
  */
 async function updateEmail(req, res) {
+	const errors = validationResult(req);
+	if (errors.isEmpty() === false) {
+		res.json(errors.array());
+		return;
+	} else if ("userId" in req.session === false) {
+		res.json({ type: "error", msg: "Not logged in" });
+		return;
+	}
+
 	const body = req.body;
-	if (!body.username || !body.password || !body.newEmail) {
-		res.send(`${req.originalUrl}: Missing a parameter 
-			${formatJson({
-				username: username in body,
-				password: password in body,
-				newEmail: newEmail in body,
-			})}`);
+	const accountData = await service.autheticateBySession(req.session.userId, body.password);
+	let response = new AjaxResponse("info", "Email not updated", { modifiedCount: 0 });
+	if (accountData !== null) {
+		const updateData = await service.updateEmail(req.session.userId, body.newEmail);
+		response.data = updateData;
+		response.msg = JSON.stringify(updateData);
+		res.json(response);
 	} else {
-		const accountData = await service.authenticateUser(body.username, body.password);
-		if (accountData !== null) {
-			const updateData = await service.updateEmail(accountData._id, body.newEmail);
-			res.json(updateData);
-		} else {
-			res.json({ modifiedCount: 0 });
-		}
+		res.json(response);
 	}
 }
 
@@ -144,22 +145,25 @@ async function updateEmail(req, res) {
  * @param {*} res
  */
 async function updatePassword(req, res) {
+	const errors = validationResult(req);
+	if (errors.isEmpty() === false) {
+		res.json(errors.array());
+		return;
+	} else if ("userId" in req.session === false) {
+		res.json({ type: "error", msg: "Not logged in" });
+		return;
+	}
+
 	const body = req.body;
-	if (!body.username || !body.password || !body.newPassword) {
-		res.send(`[${req.originalUrl}] Missing a parameter 
-			${formatJson({
-				username: username in body,
-				password: password in body,
-				newPassword: newPassword in body,
-			})}`);
+	const accountData = await service.autheticateBySession(req.session.userId, body.password);
+	let response = new AjaxResponse("info", "Password not updated", { modifiedCount: 0 });
+	if (accountData !== null) {
+		const updateData = await service.updatePassword(req.session.userId, body.newPassword);
+		response.data = updateData;
+		response.msg = JSON.stringify(updateData);
+		res.json(response);
 	} else {
-		const accountData = await service.authenticateUser(body.username, body.password);
-		if (accountData !== null) {
-			const updateData = await service.updatePassword(accountData._id, body.newPassword);
-			res.json(updateData);
-		} else {
-			res.json({ modifiedCount: 0 });
-		}
+		res.json(response);
 	}
 }
 
@@ -169,16 +173,27 @@ async function updatePassword(req, res) {
  * @param {*} res
  */
 async function deleteAccount(req, res) {
-	const body = req.body;
-	if (!req.session.userId || !body.password) {
-		res.send(`[${req.originalUrl}]: Missing a parameter ${formatJson(body)}`);
-	} else {
-		const accountData = await service.authenticateUser(body.username, body.password);
-		if (accountData !== null) {
-			const updateData = await service.deleteAccount(accountData._id);
-			res.json(updateData);
-		}
+	const errors = validationResult(req);
+	if (errors.isEmpty() === false) {
+		res.json(errors.array());
+		return;
+	} else if ("userId" in req.session === false) {
+		res.json({ type: "error", msg: "Not logged in" });
+		return;
 	}
+
+	const body = req.body;
+	const accountData = await service.autheticateBySession(req.session.userId, body.password);
+	let response = new AjaxResponse("info", "", { deletedCount: 0 });
+	if (accountData !== null) {
+		const updateData = await service.deleteAccount(req.session.userId);
+		response.data = updateData;
+		response.msg = JSON.stringify(updateData);
+		res.json(response);
+	} else {
+		res.json(response);
+	}
+	destroySession(req, res);
 }
 
 module.exports = {

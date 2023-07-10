@@ -41,6 +41,39 @@ $("#getData").click(() => {
 	});
 });
 
+$("#updateEmail").click(() => {
+	const data = { newEmail: $("#newEmailInput").val(), password: $("#currentPasswordInput").val() };
+	$.ajax({
+		type: "POST",
+		url: "/account/update-email",
+		data: data,
+		success: updateStatus,
+		dataType: "json",
+	});
+});
+
+$("#updatepasswordBtn").click(() => {
+	const data = { newPassword: $("#newPasswordInput").val(), password: $("#currentPasswordInput").val() };
+	$.ajax({
+		type: "POST",
+		url: "/account/update-password",
+		data: data,
+		success: updateStatus,
+		dataType: "json",
+	});
+});
+
+$("#deleteAccountBtn").click(() => {
+	const data = { password: $("#currentPasswordInput").val() };
+	$.ajax({
+		type: "POST",
+		url: "/account/delete",
+		data: data,
+		success: updateStatus,
+		dataType: "json",
+	});
+});
+
 function updateStatus(data) {
 	$("#statusMessage").empty();
 	if ("msg" in data) {

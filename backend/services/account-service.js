@@ -6,6 +6,8 @@ const { generateKey, getPasswordHash, verifyPassword } = require("../utils/crypt
 const { PERMISSION_LEVELS } = require("../data/account-data");
 
 const mongoose = require("mongoose");
+const { logger, formatJson } = require("../utils/logger");
+const { format } = require("winston");
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
 /**
@@ -53,6 +55,15 @@ async function getAccountData(accountId) {
  */
 async function authenticateUser(email, password) {
 	const accountData = await model.findOne({ email: email }, "_id email password");
+	return await authenticateAccount(accountData, password);
+}
+
+async function autheticateBySession(sessionToken, password) {
+	const accountData = await model.findOne({ _id: sessionToken }, "_id email password");
+	return await authenticateAccount(accountData, password);
+}
+
+async function authenticateAccount(accountData, password) {
 	let authData = { success: false, accountId: null };
 	if (accountData === null) {
 		return authData;
@@ -120,6 +131,7 @@ module.exports = {
 	accountExists,
 	getAccountData,
 	authenticateUser,
+	autheticateBySession,
 	updateEmail,
 	updatePassword,
 	deactivateAccount,

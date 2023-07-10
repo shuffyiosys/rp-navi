@@ -1,24 +1,24 @@
 /**
- * @file Routes for pages from the root URL. 
- * 
+ * @file Routes for pages from the root URL.
+ *
  */
-const router = require('express').Router()
-const { RenderData } = require('../classes/render-data');
+const router = require("express").Router();
+const { PageRenderParams } = require("../classes/page-render-params");
 
-const basepath = '/';
+const basepath = "/";
 
 /* GET routers****************************************************************/
-router.get('/', (req, res) => {
-	const pageData = new RenderData('Home', req.session, res.locals);
-	res.render('index', pageData);
+router.get("/", (req, res) => {
+	const pageData = new PageRenderParams("Home", req.session, res.locals);
+	res.render("index", pageData);
 });
 
-router.get('/test', (req, res) => {
-	const pageData = new RenderData('Test', req.session, res.locals);
-	res.render('test', pageData);
+router.get("/test", (req, res) => {
+	const pageData = new PageRenderParams("Test", req.session, res.locals);
+	res.render("test", pageData);
 });
 
 module.exports = {
 	router,
-	basepath
+	basepath,
 };

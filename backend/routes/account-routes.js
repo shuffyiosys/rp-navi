@@ -24,8 +24,13 @@ router.get("/data", getAccountData);
 router.post(
 	"/create",
 	[
-		check("email", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
-		check("password", "Password must be at least 6 characters in length").notEmpty().isLength({ min: 5 }),
+		check("email")
+			.notEmpty()
+			.withMessage("No email address entered")
+			.normalizeEmail()
+			.isEmail()
+			.withMessage("Invalid email address format"),
+		check("password", "Password must be at least 6 characters in length").isLength({ min: 5 }),
 	],
 	createAccount
 );
@@ -35,7 +40,12 @@ router.post("/logout", logoutAccount);
 router.post(
 	"/login",
 	[
-		check("email", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
+		check("email")
+			.notEmpty()
+			.withMessage("No email address entered")
+			.normalizeEmail()
+			.isEmail()
+			.withMessage("Invalid email address format"),
 		check("password", "No password entered").notEmpty(),
 	],
 	loginAccount
@@ -45,7 +55,7 @@ router.post(
 	"/update-password",
 	[
 		check("password", "No password entered").notEmpty(),
-		check("newPassword", "Password must be at least 6 characters in length").notEmpty().isLength({ min: 5 }),
+		check("newPassword", "New password must be at least 6 characters in length").isLength({ min: 5 }),
 	],
 	updatePassword
 );
@@ -53,7 +63,12 @@ router.post(
 router.post(
 	"/update-email",
 	[
-		check("newEmail", "Email address is not valid").notEmpty().isEmail().normalizeEmail(),
+		check("newEmail")
+			.notEmpty()
+			.withMessage("No email address entered")
+			.isEmail()
+			.normalizeEmail()
+			.withMessage("Invalid email address format"),
 		check("password", "No password entered").notEmpty(),
 	],
 	updateEmail

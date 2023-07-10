@@ -4,7 +4,7 @@ const https = require("https");
 const path = require("path");
 const fs = require("fs");
 const { logger } = require("../utils/logger");
-const { RenderData } = require("../classes/render-data");
+const { PageRenderParams } = require("../classes/page-render-params");
 
 function load(app, config) {
 	// catch 404 and forward to error handler
@@ -13,7 +13,7 @@ function load(app, config) {
 		if (process.env.NODE_ENV === "development") {
 			next(createError(404));
 		} else {
-			const data = new RenderData("Page not found", req.session, res.locals);
+			const data = new PageRenderParams("Page not found", req.session, res.locals);
 			next(res.render("404", data));
 		}
 	});
@@ -34,7 +34,7 @@ function load(app, config) {
 
 		// render the error page
 		res.status(err.status || 500);
-		let data = new RenderData("Website error", req.session, res.locals);
+		let data = new PageRenderParams("Website error", req.session, res.locals);
 		data.message = res.locals.message;
 		data.error = res.locals.error;
 		res.render("error", data);
