@@ -44,6 +44,10 @@ async function getAccountData(accountId) {
 	return await model.findOne({ _id: accountId }, "-password");
 }
 
+async function getAccountDataByEmail(email) {
+	return await model.findOne({ email: email }, "-password");
+}
+
 /**
  * Authenticates login information
  * @param {String} email Email address associated with the account
@@ -104,6 +108,11 @@ async function updatePassword(accountId, newPassword) {
 	return operationResult;
 }
 
+async function updateVerification(accountId, verificationStatus) {
+	const operationResult = await model.updateOne({ _id: accountId }, { verified: verificationStatus });
+	return operationResult;
+}
+
 /**
  * Deactivates the account
  * @param {*} accountId
@@ -129,11 +138,15 @@ async function deleteAccount(accountId) {
 module.exports = {
 	createAccount,
 	accountExists,
+
 	getAccountData,
+	getAccountDataByEmail,
+
 	authenticateUser,
 	autheticateBySession,
 	updateEmail,
 	updatePassword,
+	updateVerification,
 	deactivateAccount,
 	deleteAccount,
 };

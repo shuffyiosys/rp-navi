@@ -7,6 +7,6 @@ const VERIFY_ACTION = Object.freeze({
 	RESET_PASSWORD: 2,
 });
 
-module.export = {
+module.exports = {
 	VERIFY_ACTION,
 };

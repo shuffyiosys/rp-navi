@@ -36,7 +36,10 @@ let accountSchema = new mongoose.Schema(
 			default: PERMISSION_LEVELS.USER,
 		},
 
-		verified: Boolean,
+		verified: {
+			type: Boolean,
+			default: false,
+		},
 
 		blocked: [ObjectId],
 	},

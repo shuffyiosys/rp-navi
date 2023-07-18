@@ -15,7 +15,7 @@ function generateKey() {
 	const rand = crypto.randomBytes(32);
 	const hash = crypto.createHash("sha256");
 	hash.update(new Date().toString() + rand.toString());
-	return hash.digest().toString("base64");
+	return hash.digest().toString("base64url");
 }
 
 /**

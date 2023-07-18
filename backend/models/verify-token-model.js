@@ -25,11 +25,21 @@ let VerifyTokenSchema = new mongoose.Schema(
 		},
 
 		referenceId: {
-			type: ObjectId,
+			type: String,
 			required: true,
 		},
+
+		expireAt: {
+			type: Date,
+			expires: 60,
+			//expires: 604800
+		},
 	},
-	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }
+	{
+		collation: { locale: "en_US", strength: 2 },
+		timestamps: true,
+	}
 );
 
+VerifyTokenSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 });
 mongoose.model(MODEL_NAMES.VERIFY_TOKENS, VerifyTokenSchema);

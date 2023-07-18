@@ -32,10 +32,20 @@ $("#logOutBtn").click(() => {
 });
 
 $("#getData").click(() => {
-	const data = { email: $("#signupEmail").val(), password: $("#signupPassword").val() };
+	const data = {};
 	$.ajax({
 		type: "GET",
 		url: "/account/data",
+		data: data,
+		success: updateStatus,
+	});
+});
+
+$("#getVerification").click(() => {
+	const data = {};
+	$.ajax({
+		type: "GET",
+		url: "/account/resendVerify",
 		data: data,
 		success: updateStatus,
 	});
@@ -76,15 +86,18 @@ $("#deleteAccountBtn").click(() => {
 
 function updateStatus(data) {
 	$("#statusMessage").empty();
-	if ("msg" in data) {
-		$("#statusMessage").append(`<li>${data.msg}</li>`);
-	} else if (Array.isArray(data)) {
+	console.log("Response data:", data);
+	if (Array.isArray(data)) {
 		data.forEach((element) => {
 			$("#statusMessage").append(`<li>${element.msg}</li>`);
 		});
 	} else {
-		for (const item in data) {
-			$("#statusMessage").append(`<li>${item}: ${data[item]}</li>`);
+		$("#statusMessage").append(`<li>${data.type}</li>`);
+		$("#statusMessage").append(`<li>${data.msg}</li>`);
+		$("#statusMessage").append(`<li>Data:<ul id="respDataList">`);
+		for (const item in data.data) {
+			$("#respDataList").append(`<li>${item}: ${data.data[item]}</li>`);
 		}
+		$("#statusMessage").append(`</ul></li>`);
 	}
 }
