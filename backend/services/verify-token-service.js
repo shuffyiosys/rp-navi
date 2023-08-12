@@ -6,6 +6,8 @@ const { logger } = require("../utils/logger");
 
 async function generateToken(action, referenceId) {
 	const token = generateKey();
+
+	logger.info(`Creating verification token for ${referenceId}`);
 	const tokenData = await model.create({
 		token: token,
 		action: action,
@@ -14,11 +16,18 @@ async function generateToken(action, referenceId) {
 	return tokenData;
 }
 
-async function getToken(action, referenceId) {
-	return await model.find({
-		action: action,
-		referenceId: referenceId,
-	});
+async function getToken(token = null, action = null, referenceId = null) {
+	let searchQuery = {};
+	if (token) {
+		searchQuery.token = token;
+	}
+	if (action) {
+		searchQuery.action = action;
+	}
+	if (referenceId) {
+		searchQuery.referenceId = referenceId;
+	}
+	return model.findOne(searchQuery);
 }
 
 async function verifyRequest(token, action, referenceId) {

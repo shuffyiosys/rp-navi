@@ -6,48 +6,45 @@ html
 		script(src="./js/index_test.js" defer)
 		link(rel="stylesheet", href="./css/index.css")
 	body 
-		div.formStyle
-			p Messages
-			ul#statusMessage
 		div.content
 			div.formStyle
-				p Sign up
 				label Email: 
-					input#signupEmail(type="text")
+					input#emailInput(type="text")
 				br
 				label Password: 
-					input#signupPassword(type="password")
+					input#passwordInput(type="password")
 				br
 				br
-				button#signupSubmit(style="margin-right: 0.5rem;") Sign up
+				button#signupSubmit Sign up
 				button#loginSubmit Login
+				button#forgotPassword Forgot Password
+				br
+				br
+				label Reset password:
+					input#resetPasswordInput(type="password")
+				br
+				label Reset token:
+					input#resetTokenInput(type="text")
+					button#resetPasswordBtn Reset Password
 
 			div.formStyle
-				p Log out
-				button#logOutBtn Logout
-
-			div.formStyle
-				p Get account data
-				button#getData Get Data
-				p Resend Verification
+				p Logged in actions
+				button#logOutBtn Logout 
+				button#getData Get account data
 				button#getVerification Resend Verification
-			
-			div.formStyle
-				p Change email
-				label Current Password: 
-					input#currentPasswordInput(type="password")
 				br
-				label New Email: 
-					input#newEmailInput(type="email")
 				br
+				label Change Email: 
+				input#newEmailInput(type="email")
 				button#updateEmail Update
 				br
 				br
-				label New Password:
-					input#newPasswordInput(type="password")
-				br
+				label Change Password:
+				input#newPasswordInput(type="password")
 				button#updatepasswordBtn Update
 				br
 				br
 				button#deleteAccountBtn Delete
-			
+		div.formStyle
+			p Messages
+			ul#statusMessage

@@ -5,9 +5,12 @@
 const PERMISSION_LEVELS = Object.freeze({
 	ADMIN: 1,
 	USER: 0,
-	INACTIVE: -1,
-	GHOSTED: -2,
-	BANNED: -3,
+
+	NEED_NEW_PASSWORD: -1,
+
+	INACTIVE: -100,
+	GHOSTED: -200,
+	BANNED: -300,
 });
 
 module.exports = {

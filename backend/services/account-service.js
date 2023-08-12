@@ -1,13 +1,12 @@
 /**
  * Handles all Account based data manipulation and interfaces with the database.
  */
-const { MODEL_NAMES } = require("../models/model-names");
-const { generateKey, getPasswordHash, verifyPassword } = require("../utils/crypto");
 const { PERMISSION_LEVELS } = require("../data/account-data");
+const { logger, formatJson } = require("../utils/logger");
+const crypto = require("../utils/crypto");
 
 const mongoose = require("mongoose");
-const { logger, formatJson } = require("../utils/logger");
-const { format } = require("winston");
+const { MODEL_NAMES } = require("../models/model-names");
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
 /**
@@ -17,8 +16,10 @@ const model = mongoose.model(MODEL_NAMES.ACCOUNT);
  * @returns An object from the DB of the created account
  */
 async function createAccount(email, password) {
-	const salt = await generateKey();
-	const hash = await getPasswordHash(password, salt);
+	const salt = await crypto.generateKey();
+	const hash = await crypto.getPasswordHash(password, salt);
+
+	logger.info(`${email} is attempting to create an account`);
 	const accountData = await model.create({
 		email: email,
 		password: hash,
@@ -36,47 +37,45 @@ async function accountExists(email) {
 }
 
 /**
- * Gets account data based on the ID of the account
+ * Gets account data based based on the account ID, email, or both. Both arguments are optional,
+ * however a default query is used to make sure that if executed without filling in either
+ * argument, the search returns nothing.
  * @param {String} accountId Account ID used to pull up the data
+ * @param {String} email Email addrress tied to the account
  * @returns An object from the DB of the account data
  */
-async function getAccountData(accountId) {
-	return await model.findOne({ _id: accountId }, "-password");
-}
-
-async function getAccountDataByEmail(email) {
-	return await model.findOne({ email: email }, "-password");
+async function getAccountData(accountId = null, email = null) {
+	if (accountId) {
+		return await model.findById(accountId, "-password");
+	} else if (email) {
+		return await model.findOne({ email }, "-password");
+	} else {
+		return null;
+	}
 }
 
 /**
  * Authenticates login information
  * @param {String} email Email address associated with the account
  * @param {String} password Password for authentication
- * @returns An object containing the following:
- *  { success: {Boolean},
- *    accountId: {String}
- *  }
+ * @returns
  */
-async function authenticateUser(email, password) {
-	const accountData = await model.findOne({ email: email }, "_id email password");
-	return await authenticateAccount(accountData, password);
-}
+async function authenticateUser(password, email = null, sessionToken = null) {
+	let accountData = null;
+	if (sessionToken) {
+		accountData = await model.findOne({ token: sessionToken }, "_id email password");
+	} else if (email) {
+		accountData = await model.findOne({ email: email }, "_id email password");
+	}
 
-async function autheticateBySession(sessionToken, password) {
-	const accountData = await model.findOne({ _id: sessionToken }, "_id email password");
-	return await authenticateAccount(accountData, password);
-}
+	if (accountData === null || accountData.permissions === PERMISSION_LEVELS.NEED_NEW_PASSWORD) {
+		return null;
+	}
 
-async function authenticateAccount(accountData, password) {
-	let authData = { success: false, accountId: null };
-	if (accountData === null) {
-		return authData;
-	} else if ((await verifyPassword(accountData.password, password)) === true) {
-		authData.success = true;
-		authData.accountId = accountData._id;
-		return authData;
+	if ((await crypto.verifyPassword(accountData.password, password)) === true) {
+		return { id: accountData._id };
 	} else {
-		return authData;
+		return null;
 	}
 }
 
@@ -89,6 +88,7 @@ async function authenticateAccount(accountData, password) {
  * @note Calling this should be preceeded by an email verification and authentication check.
  */
 async function updateEmail(accountId, newEmail) {
+	logger.info(`${accountId} is updating their email to ${newEmail}`);
 	const operationResult = await model.updateOne({ _id: accountId }, { email: newEmail });
 	return operationResult;
 }
@@ -102,13 +102,16 @@ async function updateEmail(accountId, newEmail) {
  * @note Calling this should be preceeded by a authentication check
  */
 async function updatePassword(accountId, newPassword) {
-	const salt = await generateKey();
-	const newPasswordHash = await getPasswordHash(newPassword, salt);
+	const salt = await crypto.generateKey();
+	const newPasswordHash = await crypto.getPasswordHash(newPassword, salt);
+
+	logger.info(`${accountId} is updating their password`);
 	const operationResult = await model.updateOne({ _id: accountId }, { password: newPasswordHash });
 	return operationResult;
 }
 
 async function updateVerification(accountId, verificationStatus) {
+	logger.info(`${accountId} verified their status to ${verificationStatus}`);
 	const operationResult = await model.updateOne({ _id: accountId }, { verified: verificationStatus });
 	return operationResult;
 }
@@ -119,6 +122,7 @@ async function updateVerification(accountId, verificationStatus) {
  * @returns
  */
 async function deactivateAccount(accountId) {
+	logger.info(`${accountId} is deactivating their password`);
 	const operationResult = await model.updateOne({ _id: accountId }, { rank: PERMISSION_LEVELS.INACTIVE });
 	return operationResult;
 }
@@ -131,22 +135,47 @@ async function deactivateAccount(accountId) {
  * @note Calling this should be preceeded by a authentication check
  */
 async function deleteAccount(accountId) {
+	logger.info(`${accountId} is deleting their account`);
 	const operationResult = await model.deleteOne({ _id: accountId });
 	return operationResult;
 }
+
+async function requireNewPassword(accountId = null, email = null) {
+	let identification = "";
+	if (accountId) {
+		identification = `${accountId}`;
+	} else if (email) {
+		identification = `${email}`;
+	} else {
+		return;
+	}
+	logger.notice(`${identification} has been marked for needing a new password`);
+}
+
+async function ghostAccount(accountId = null, email = null) {}
+
+async function banAccount(accountId = null, email = null) {}
+
+async function setAccountState(email = null) {}
 
 module.exports = {
 	createAccount,
 	accountExists,
 
 	getAccountData,
-	getAccountDataByEmail,
 
 	authenticateUser,
-	autheticateBySession,
+
 	updateEmail,
 	updatePassword,
 	updateVerification,
+
 	deactivateAccount,
+
 	deleteAccount,
+
+	/* Admin only functions */
+	requireNewPassword,
+	ghostAccount,
+	banAccount,
 };

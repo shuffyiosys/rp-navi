@@ -1,5 +1,5 @@
 $("#signupSubmit").click(() => {
-	const data = { email: $("#signupEmail").val(), password: $("#signupPassword").val() };
+	const data = { email: $("#emailInput").val(), password: $("#passwordInput").val() };
 	$.ajax({
 		type: "POST",
 		url: "/account/create",
@@ -10,10 +10,32 @@ $("#signupSubmit").click(() => {
 });
 
 $("#loginSubmit").click(() => {
-	const data = { email: $("#signupEmail").val(), password: $("#signupPassword").val() };
+	const data = { email: $("#emailInput").val(), password: $("#passwordInput").val() };
 	$.ajax({
 		type: "POST",
 		url: "/account/login",
+		data: data,
+		success: updateStatus,
+		dataType: "json",
+	});
+});
+
+$("#forgotPassword").click(() => {
+	const data = { email: $("#emailInput").val() };
+	$.ajax({
+		type: "POST",
+		url: "/account/forgotPassword",
+		data: data,
+		success: updateStatus,
+		dataType: "json",
+	});
+});
+
+$("#resetPasswordBtn").click(() => {
+	const data = { newPassword: $("#resetPasswordInput").val() };
+	$.ajax({
+		type: "POST",
+		url: `/account/resetPassword?token=${$("#resetTokenInput").val()}`,
 		data: data,
 		success: updateStatus,
 		dataType: "json",
@@ -52,7 +74,7 @@ $("#getVerification").click(() => {
 });
 
 $("#updateEmail").click(() => {
-	const data = { newEmail: $("#newEmailInput").val(), password: $("#currentPasswordInput").val() };
+	const data = { newEmail: $("#newEmailInput").val(), password: $("#passwordInput").val() };
 	$.ajax({
 		type: "POST",
 		url: "/account/update-email",
@@ -63,7 +85,7 @@ $("#updateEmail").click(() => {
 });
 
 $("#updatepasswordBtn").click(() => {
-	const data = { newPassword: $("#newPasswordInput").val(), password: $("#currentPasswordInput").val() };
+	const data = { newPassword: $("#newPasswordInput").val(), password: $("#passwordInput").val() };
 	$.ajax({
 		type: "POST",
 		url: "/account/update-password",
@@ -74,7 +96,7 @@ $("#updatepasswordBtn").click(() => {
 });
 
 $("#deleteAccountBtn").click(() => {
-	const data = { password: $("#currentPasswordInput").val() };
+	const data = { password: $("#passwordInput").val() };
 	$.ajax({
 		type: "POST",
 		url: "/account/delete",
