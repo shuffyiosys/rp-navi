@@ -6,6 +6,7 @@ const { logger, formatJson } = require("../utils/logger");
 const crypto = require("../utils/crypto");
 
 const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 const { MODEL_NAMES } = require("../models/model-names");
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
@@ -63,7 +64,8 @@ async function getAccountData(accountId = null, email = null) {
 async function authenticateUser(password, email = null, sessionToken = null) {
 	let accountData = null;
 	if (sessionToken) {
-		accountData = await model.findOne({ token: sessionToken }, "_id email password");
+		const docId = ObjectId(sessionToken);
+		accountData = await model.findOne({ _id: docId }, "_id email password");
 	} else if (email) {
 		accountData = await model.findOne({ email: email }, "_id email password");
 	}
@@ -89,7 +91,7 @@ async function authenticateUser(password, email = null, sessionToken = null) {
  */
 async function updateEmail(accountId, newEmail) {
 	logger.info(`${accountId} is updating their email to ${newEmail}`);
-	const operationResult = await model.updateOne({ _id: accountId }, { email: newEmail });
+	const operationResult = await model.updateOne({ _id: docId }, { email: newEmail });
 	return operationResult;
 }
 
@@ -104,15 +106,16 @@ async function updateEmail(accountId, newEmail) {
 async function updatePassword(accountId, newPassword) {
 	const salt = await crypto.generateKey();
 	const newPasswordHash = await crypto.getPasswordHash(newPassword, salt);
+	const docId = ObjectId(accountId);
 
 	logger.info(`${accountId} is updating their password`);
-	const operationResult = await model.updateOne({ _id: accountId }, { password: newPasswordHash });
+	const operationResult = await model.updateOne({ _id: docId }, { password: newPasswordHash });
 	return operationResult;
 }
 
 async function updateVerification(accountId, verificationStatus) {
 	logger.info(`${accountId} verified their status to ${verificationStatus}`);
-	const operationResult = await model.updateOne({ _id: accountId }, { verified: verificationStatus });
+	const operationResult = await model.updateOne({ _id: docId }, { verified: verificationStatus });
 	return operationResult;
 }
 
@@ -123,7 +126,8 @@ async function updateVerification(accountId, verificationStatus) {
  */
 async function deactivateAccount(accountId) {
 	logger.info(`${accountId} is deactivating their password`);
-	const operationResult = await model.updateOne({ _id: accountId }, { rank: PERMISSION_LEVELS.INACTIVE });
+	const docId = ObjectId(accountId);
+	const operationResult = await model.updateOne({ _id: docId }, { rank: PERMISSION_LEVELS.INACTIVE });
 	return operationResult;
 }
 
@@ -136,7 +140,8 @@ async function deactivateAccount(accountId) {
  */
 async function deleteAccount(accountId) {
 	logger.info(`${accountId} is deleting their account`);
-	const operationResult = await model.deleteOne({ _id: accountId });
+	const docId = ObjectId(accountId);
+	const operationResult = await model.deleteOne({ _id: docId });
 	return operationResult;
 }
 

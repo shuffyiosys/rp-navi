@@ -5,8 +5,9 @@
 const config = require("../config/config")();
 const accountService = require("../services/account-service");
 const verifyService = require("../services/verify-token-service");
+const mailer = require("../utils/mailer");
 const { logger, formatJson } = require("../utils/logger");
-const { validationResult } = require("express-validator/check");
+const { validationResult } = require("express-validator");
 const { AjaxResponse } = require("../classes/ajax-response");
 
 const { VERIFY_ACTION } = require("../data/verify-token-data");
@@ -19,7 +20,6 @@ const { response } = require("express");
  * clobber any existing session.
  */
 function createSession(req, res, accountId) {
-	res.cookie(config.session.name, "value", { account: accountId });
 	req.session.userId = accountId;
 	req.session.save();
 	logger.debug(`[createSession] ${req.session.userId}`);
@@ -70,8 +70,6 @@ async function createAccount(req, res) {
 	const errors = validationResult(req);
 	const body = req.body;
 
-	logger.debug(formatJson(body));
-
 	if (errors.isEmpty() === false) {
 		res.json(errors.array());
 		return;
@@ -89,8 +87,8 @@ async function createAccount(req, res) {
 		createSession(req, res, accountData.id);
 		const tokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, accountData.id);
 		// Send email for verify link
-
-		res.json(new AjaxResponse("info", "Account created", tokenData));
+		mailer.sendVerifyMail(body.email, body.email, tokenData.token);
+		res.json(new AjaxResponse("info", "Account created", {}));
 	} else {
 		res.json(new AjaxResponse("error", "Error creating an account", {}));
 	}
@@ -139,7 +137,7 @@ async function loginAccount(req, res) {
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, body.email, null);
 	if (accountData) {
-		createSession(req, res, accountData.id);
+		createSession(req, res, accountData.id.toString());
 		res.json(new AjaxResponse("info", "Login successful", {}));
 	} else {
 		res.json(new AjaxResponse("error", "Login error", {}));
@@ -247,8 +245,6 @@ async function verifyPasswordReset(req, res) {
 	}
 
 	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
-	logger.debug(formatJson(resetToken));
-	logger.debug(req.query.token);
 	if (resetToken) {
 		res.json(new AjaxResponse("info", "Password reset link verified", {}));
 	} else {
@@ -342,7 +338,6 @@ async function deleteAccount(req, res) {
 	}
 
 	const body = req.body;
-	logger.debug(`${req.session.userId}, ${body.password}`);
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
 	let response = new AjaxResponse("info", "", { deletedCount: 0 });
 	if (accountData) {

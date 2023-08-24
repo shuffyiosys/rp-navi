@@ -1,4 +1,4 @@
-const logger = require("utils/logger").logger;
+const logger = require("./logger").logger;
 const nodemailer = require("nodemailer");
 
 const VERIFY_URL_BASE = "http://localhost:3000/account/verify-account";

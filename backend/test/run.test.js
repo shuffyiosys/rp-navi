@@ -1,15 +1,65 @@
-/**
- * @file Main app configuration.
- */
-
-/* Setup environment ********************************************************/
+/** Import dependencies and environment */
 const config = require("../config/config")();
+const expect = require("chai").expect;
 const { logger, formatJson } = require("../utils/logger");
-logger.debug(`Config: ${formatJson(config)}`);
 
-/* Setup DB ******************************************************************/
-require("../loaders/mongo-db").setup(config.database.mongo);
+logger.info(`Config: ${formatJson(config)}`);
+
+/** Setup Mongoose to connect to MongoDB and the models **********************/
+const mongoose = require("mongoose");
+mongoose.Promise = global.Promise;
+
+const dbParameters = config.database.mongo;
+before(function () {
+	const MONGO_DB_URI = `mongodb://${dbParameters.url}:${dbParameters.port}`;
+	let mongooseOptions = {
+		dbName: dbParameters.name,
+		user: dbParameters.username,
+		pass: dbParameters.password,
+	};
+	mongoose.set("strictQuery", false);
+
+	if (dbParameters.username && dbParameters.password) {
+		mongooseOptions.authSource = "admin";
+	}
+
+	logger.info(`[MongoDB] Attempting to connect to ${MONGO_DB_URI}`);
+	logger.debug("[MongoDB] Connecting using options %o", mongooseOptions);
+
+	mongoose.connection
+		.once("open", () => {
+			logger.info(`[MongoDB] Connected to ${MONGO_DB_URI}`);
+		})
+		.on("error", (error) => {
+			logger.error("[MongoDB] Connection error : ", error);
+		})
+		.on("disconnected", () => {
+			logger.info("[MongDB] Server disconneceted from database.");
+		});
+	return mongoose.connect(MONGO_DB_URI, mongooseOptions).catch((err) => {
+		logger.error(err);
+	});
+});
+
 require("../loaders/mongo-db").initModels();
 
-/** Tests to run. Comment out whatever isn't needed. */
-require("./services/account-service-test")();
+/** Test cases ***************************************************************/
+describe("Sanity check", function () {
+	describe("#indexOf()", function () {
+		it("should return -1 when the value is not present", function () {
+			expect([1, 2, 3].indexOf(4)).to.equal(-1);
+		});
+	});
+});
+
+describe("RP Navi Controller Test", function () {
+	describe("Accounts", function () {
+		require("./controllers/account-controller.test").runTest();
+	});
+});
+
+/** Cleanup things so the testing framework can exit *************************/
+after(async function () {
+	logger.info(`Closing MonogoDB connection...`);
+	return mongoose.connection.close();
+});
