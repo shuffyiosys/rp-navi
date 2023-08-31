@@ -48,10 +48,10 @@ function destroySession(req, res) {
 function hasCommonReqErrors(req, res) {
 	const errors = validationResult(req);
 	if (errors.isEmpty() === false) {
-		res.json(errors.array());
+		res.json(new AjaxResponse("error", "Errors with input", { errors: errors.array() }));
 		return true;
 	} else if ("userId" in req.session === false) {
-		res.json({ msg: "Not logged in" });
+		res.json(new AjaxResponse("error", "Not logged in", {}));
 		return true;
 	}
 	return false;
@@ -188,10 +188,8 @@ async function updatePassword(req, res) {
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse("info", "Password not updated", {
-		modifiedCount: 0,
-	});
-	if (accountData === true) {
+	let response = new AjaxResponse("info", "Password not updated", { modifiedCount: 0 });
+	if (accountData !== null) {
 		const updateData = await accountService.updatePassword(req.session.userId, body.newPassword);
 		response.data = updateData;
 		response.msg = JSON.stringify(updateData);

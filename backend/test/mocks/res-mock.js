@@ -1,12 +1,13 @@
-const { logger, formatJson } = require('../../utils/logger');
+const { logger, formatJson } = require("../../utils/logger");
 
 class ResponseMock {
 	constructor() {
 		this.locals = {};
+		this.jsonData = {};
 	}
 
 	json(jsonObj) {
-		this.json = jsonObj;
+		this.jsonData = jsonObj;
 	}
 
 	redirect(redirectUrl) {
@@ -14,7 +15,7 @@ class ResponseMock {
 	}
 
 	render(pagePath, data) {
-		logger.info(`Rendering page ${pagePath} with data ${formatJson(data)}`)
+		logger.info(`Rendering page ${pagePath} with data ${formatJson(data)}`);
 	}
 
 	status(statusCode) {
@@ -23,5 +24,5 @@ class ResponseMock {
 }
 
 module.exports = {
-	ResponseMock
-}
+	ResponseMock,
+};

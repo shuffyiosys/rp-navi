@@ -47,9 +47,9 @@ async function accountExists(email) {
  */
 async function getAccountData(accountId = null, email = null) {
 	if (accountId) {
-		return await model.findById(accountId, "-password");
+		return await model.findById(accountId);
 	} else if (email) {
-		return await model.findOne({ email }, "-password");
+		return await model.findOne({ email });
 	} else {
 		return null;
 	}
@@ -91,6 +91,7 @@ async function authenticateUser(password, email = null, sessionToken = null) {
  */
 async function updateEmail(accountId, newEmail) {
 	logger.info(`${accountId} is updating their email to ${newEmail}`);
+	const docId = ObjectId(accountId);
 	const operationResult = await model.updateOne({ _id: docId }, { email: newEmail });
 	return operationResult;
 }
