@@ -1,5 +1,5 @@
 /** Import dependencies and environment */
-const config = require("../config/config")();
+const config = require("../config/config")(".env.test.local");
 const expect = require("chai").expect;
 const { logger, formatJson } = require("../utils/logger");
 

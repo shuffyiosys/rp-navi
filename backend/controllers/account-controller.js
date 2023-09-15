@@ -86,8 +86,14 @@ async function createAccount(req, res) {
 	if (accountData !== null) {
 		createSession(req, res, accountData.id);
 		const tokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, accountData.id);
-		// Send email for verify link
-		mailer.sendVerifyMail(body.email, body.email, tokenData.token);
+
+		// Send verification mail based on environment.
+		// If prod, send actual mail, if development, send a test mail over ethereal
+		if (config.environment === "production") {
+			// Send mail here
+		} else if (config.environment === "development") {
+			mailer.sendVerifyMail(body.email, body.email, tokenData.token);
+		}
 		res.json(new AjaxResponse("info", "Account created", {}));
 	} else {
 		res.json(new AjaxResponse("error", "Error creating an account", {}));
