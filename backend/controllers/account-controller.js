@@ -2,16 +2,16 @@
  * @file controllers/account-controller.js
  * @brief Handles the input requests and outgoing responses for account related functionality
  */
+const { validationResult } = require("express-validator");
+
+const { AjaxResponse } = require("../classes/ajax-response");
 const config = require("../config/config")();
+const { VERIFY_ACTION } = require("../data/verify-token-data");
 const accountService = require("../services/account-service");
 const verifyService = require("../services/verify-token-service");
 const mailer = require("../utils/mailer");
 const { logger, formatJson } = require("../utils/logger");
-const { validationResult } = require("express-validator");
-const { AjaxResponse } = require("../classes/ajax-response");
-
-const { VERIFY_ACTION } = require("../data/verify-token-data");
-const { response } = require("express");
+const { verifyNoReqErrors } = require("../utils/controller-utils");
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -19,7 +19,7 @@ const { response } = require("express");
  * If there's already a session, this function returns immediately as doing this again seems to
  * clobber any existing session.
  */
-function createSession(req, res, accountId) {
+function createSession(req, accountId) {
 	req.session.userId = accountId;
 	req.session.save();
 	logger.debug(`[createSession] ${req.session.userId}`);
@@ -27,8 +27,8 @@ function createSession(req, res, accountId) {
 
 /**
  * @brief Destroys the session
- * @param {*} req Request data from client
- * @param {*} res Response object to client
+ * @param {object} req Request data from client
+ * @param {ojbect} res Response object to client
  */
 function destroySession(req, res) {
 	req.session.destroy((err) => {
@@ -37,24 +37,6 @@ function destroySession(req, res) {
 		}
 		res.status(200);
 	});
-}
-
-/**
- * @brief Checks for commonly expected errors
- * @param {*} req Request data from client
- * @param {*} res Response object to client
- * @returns True if there are errors, false otherwise
- */
-function hasCommonReqErrors(req, res) {
-	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
-		res.json(new AjaxResponse("error", "Errors with input", { errors: errors.array() }));
-		return true;
-	} else if ("userId" in req.session === false) {
-		res.json(new AjaxResponse("error", "Not logged in", {}));
-		return true;
-	}
-	return false;
 }
 
 /**
@@ -67,6 +49,7 @@ function hasCommonReqErrors(req, res) {
  *           On Success: Create a session ~~and redirect~~
  */
 async function createAccount(req, res) {
+	console.log(req);
 	const errors = validationResult(req);
 	const body = req.body;
 
@@ -84,7 +67,7 @@ async function createAccount(req, res) {
 
 	const accountData = await accountService.createAccount(body.email, body.password);
 	if (accountData !== null) {
-		createSession(req, res, accountData.id);
+		createSession(req, accountData.id);
 		const tokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, accountData.id);
 
 		// Send verification mail based on environment.
@@ -116,9 +99,7 @@ async function getAccountData(req, res) {
 }
 
 /**
- *
- * @param {*} req
- * @param {*} res
+ * Destroys the login session for the requesting client
  */
 async function logoutAccount(req, res) {
 	destroySession(req, res);
@@ -143,7 +124,7 @@ async function loginAccount(req, res) {
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, body.email, null);
 	if (accountData) {
-		createSession(req, res, accountData.id.toString());
+		createSession(req, accountData.id.toString());
 		res.json(new AjaxResponse("info", "Login successful", {}));
 	} else {
 		res.json(new AjaxResponse("error", "Login error", {}));
@@ -157,7 +138,7 @@ async function loginAccount(req, res) {
  */
 async function updateEmail(req, res) {
 	const body = req.body;
-	if (hasCommonReqErrors(req, res) === true) {
+	if (verifyNoReqErrors(req, res) === true) {
 		return;
 	} else if (await accountService.accountExists(body.newEmail)) {
 		res.json({
@@ -188,7 +169,7 @@ async function updateEmail(req, res) {
  * @param {*} res
  */
 async function updatePassword(req, res) {
-	if (hasCommonReqErrors(req, res) === true) {
+	if (verifyNoReqErrors(req, res) === true) {
 		return;
 	}
 
@@ -292,7 +273,7 @@ async function updatePasswordReset(req, res) {
  * @returns
  */
 async function verifyAccount(req, res) {
-	if (hasCommonReqErrors(req, res) === true) {
+	if (verifyNoReqErrors(req, res) === true) {
 		return;
 	}
 
@@ -310,7 +291,7 @@ async function verifyAccount(req, res) {
 }
 
 async function resendVerification(req, res) {
-	if (hasCommonReqErrors(req, res) === true) {
+	if (verifyNoReqErrors(req, res) === true) {
 		return;
 	}
 	await verifyService.deleteToken(undefined, VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);

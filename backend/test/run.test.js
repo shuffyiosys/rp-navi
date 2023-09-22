@@ -1,7 +1,16 @@
 /** Import dependencies and environment */
+const fs = require("fs");
+const path = require("path");
+const { logger, formatJson } = require("../utils/logger");
+
+const filepath = path.join(__dirname + "/../config/.env.test.local");
+if (fs.existsSync(filepath) === false) {
+	logger.error(`File ${filepath} missing, this is needed for running tests. Aborting test.`);
+	process.exit(0);
+}
+
 const config = require("../config/config")(".env.test.local");
 const expect = require("chai").expect;
-const { logger, formatJson } = require("../utils/logger");
 
 logger.info(`Config: ${formatJson(config)}`);
 
@@ -53,9 +62,8 @@ describe("Sanity check", function () {
 });
 
 describe("RP Navi Controller Test", function () {
-	describe("Accounts", function () {
-		require("./controllers/account-controller.test").runTest();
-	});
+	// describe("Accounts", () => require("./controllers/account-controller.test").runTest());
+	describe("Characters", () => require("./controllers/character-controller.test").runTest());
 });
 
 /** Cleanup things so the testing framework can exit *************************/

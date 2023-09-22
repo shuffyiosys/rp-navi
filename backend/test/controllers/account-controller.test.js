@@ -73,7 +73,6 @@ async function test_signup() {
 	const req = new RequestMock(accountData);
 	const res = new ResponseMock();
 	await controller.createAccount(req, res);
-	console.log(res);
 	expect(res.jsonData.type).to.equal("info");
 	expect("data" in res.jsonData).to.equal(true);
 	accountData.id = req.session.userId;

@@ -6,9 +6,8 @@ const { MODEL_NAMES } = require("./model-names");
 
 const Schema = mongoose.Schema;
 const ObjectId = Schema.ObjectId;
-/** Database schema for characters
 
- */
+/** Database schema for characters *******************************************/
 let characterSchema = new mongoose.Schema(
 	{
 		charaName: {
@@ -17,12 +16,11 @@ let characterSchema = new mongoose.Schema(
 			required: true,
 		},
 
+		owner: ObjectId,
+
 		profileHtml: String,
 		profileCss: String,
 		profileJs: String,
-
-		friends: [ObjectId],
-		pendingFriends: [ObjectId],
 	},
 	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }
 );

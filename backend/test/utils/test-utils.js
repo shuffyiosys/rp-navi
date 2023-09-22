@@ -36,10 +36,23 @@ function getRandomFloor(maxValue, minValue = 0) {
 	return Math.floor(Math.random() * maxValue + minValue);
 }
 
+function getRandomString(size = 12) {
+	const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	let output = "";
+	let maxSize = size > 6 ? size : 6;
+
+	for (let i = 0; i < maxSize; i++) {
+		const idx = Math.floor(Math.random() * characters.length);
+		output += characters[idx];
+	}
+	return output;
+}
+
 module.exports = {
 	createRandomId,
 	pad,
 	shuffle,
 	getRandomCeil,
 	getRandomFloor,
+	getRandomString,
 };
