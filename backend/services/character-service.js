@@ -31,14 +31,17 @@ async function getCharacterProfile(characterName) {
 	return model.findOne({ charaName: characterName }, "charaName profileHtml profileCss profileJs");
 }
 
-async function updateProfile(chracterName, accountId, updateData) {
+async function updateProfile(characterName, accountId, updateData) {
 	const ownerId = ObjectId(accountId);
-	logger.info(`${accountId} is updating their character ${chracterName}'s profile`);
-	const operationResult = await model.updateOne(
-		{ charaName: characterName, owner: ownerId },
-		{ profileHtml: updateData.html, profileCss: updateData.css, profileJs: updateData.js }
-	);
-	return operationResult;
+	const characterData = await model.findOne({ charaName: characterName, owner: ownerId });
+	if (characterData !== null) {
+		characterData.profileHtml = updateData.profileHtml;
+		characterData.profileCss = updateData.profileCss;
+		characterData.profileJs = updateData.profileJs;
+		const response = await characterData.save();
+		return response;
+	}
+	return null;
 }
 
 async function deleteCharacter(characterName, accountId) {

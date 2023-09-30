@@ -1,9 +1,7 @@
 const { validationResult } = require("express-validator");
 
 const { AjaxResponse } = require("../classes/ajax-response");
-const config = require("../config/config")();
 const service = require("../services/character-service");
-const mailer = require("../utils/mailer");
 const { logger, formatJson } = require("../utils/logger");
 const { verifyNoReqErrors } = require("../utils/controller-utils");
 
@@ -12,13 +10,13 @@ async function createCharacter(req, res) {
 	let response = {};
 	if (verifyNoReqErrors(req, res) === true) {
 		return;
-	} else if (await service.getCharacterExists(body.characterName)) {
+	} else if (await service.getCharacterExists(body.charaName)) {
 		response = new AjaxResponse("error", "A character with this name exists", {});
 		res.json(response);
 		return;
 	}
 
-	const characterData = await service.createCharacter(body.characterName, req.session.userId);
+	const characterData = await service.createCharacter(body.charaName, req.session.userId);
 	if (characterData !== null) {
 		response = new AjaxResponse("info", "Character created", characterData);
 	} else {
@@ -56,32 +54,33 @@ async function getCharacterProfile(req, res) {
 }
 
 async function updateProfile(req, res) {
+	const body = req.body;
+	const session = req.session;
 	let response = null;
 	if (verifyNoReqErrors(req, res) === true) {
 		return;
-	} else if ((await service.getCharacterExists(body.characterName)) === false) {
+	} else if ((await service.getCharacterExists(body.charaName)) === false) {
 		response = new AjaxResponse("error", "A character with this name does not exist", {});
 		res.json(response);
 		return;
 	}
 
-	const charaName = req.body.charaName;
-	const userId = req.session.userId;
+	const charaName = body.charaName;
+	const userId = session.userId;
 	const profileData = {
-		profileHtml: req.body.html,
-		profileCss: req.body.css,
-		profileJs: req.body.js,
+		profileHtml: body.html,
+		profileCss: body.css,
+		profileJs: body.js,
 	};
 
 	const updateData = await service.updateProfile(charaName, userId, profileData);
-	response.data = updateData;
-	response.msg = "Update status";
+	response = new AjaxResponse("info", "Update status", updateData);
 	res.json(response);
 }
 
 async function deleteCharacter(req, res) {
 	let response = null;
-	const charaName = req.body.characterName;
+	const charaName = req.body.charaName;
 	const userId = req.session.userId;
 	if (verifyNoReqErrors(req, res) === true) {
 		return;

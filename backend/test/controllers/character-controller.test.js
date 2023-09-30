@@ -25,6 +25,7 @@ function runTest() {
 				return test_createCharacter(i);
 			});
 		}
+		it("Update character profile", test_updateProfile);
 		it("Get character list", test_getCharacters);
 		it("Get character profile", test_getCharacterProfile);
 	});
@@ -46,7 +47,7 @@ function runTest() {
 
 async function test_createCharacter(index = 0) {
 	const sessionData = { userId: primaryAccount };
-	const req = new RequestMock({ characterName: characterNames[index] }, {}, sessionData);
+	const req = new RequestMock({ charaName: characterNames[index] }, {}, sessionData);
 	const res = new ResponseMock();
 	await controller.createCharacter(req, res);
 	expect(res.jsonData.type).to.equal("info");
@@ -63,7 +64,25 @@ async function test_getCharacters() {
 	expect(res.jsonData.data.length).to.equal(NUM_CHARACTERS);
 }
 
-async function test_updateProfile() {}
+async function test_updateProfile() {
+	const sessionData = { userId: primaryAccount };
+	const req = new RequestMock(
+		{
+			charaName: characterNames[0],
+			html: utils.getRandomString(64),
+			css: utils.getRandomString(64),
+			js: utils.getRandomString(64),
+		},
+		{},
+		sessionData
+	);
+	const res = new ResponseMock();
+	await controller.updateProfile(req, res);
+	expect(res.jsonData.type).to.equal("info");
+	expect(res.jsonData.data.profileHtml).to.equal(req.body.html);
+	expect(res.jsonData.data.profileCss).to.equal(req.body.css);
+	expect(res.jsonData.data.profileJs).to.equal(req.body.js);
+}
 
 async function test_getCharacterProfile() {
 	const req = new RequestMock({}, { name: characterNames[0] }, {});
@@ -75,7 +94,7 @@ async function test_getCharacterProfile() {
 
 async function test_createExistingCharacter() {
 	const sessionData = { userId: secondaryAccount };
-	const req = new RequestMock({ characterName: characterNames[0] }, {}, sessionData);
+	const req = new RequestMock({ charaName: characterNames[0] }, {}, sessionData);
 	const res = new ResponseMock();
 	await controller.createCharacter(req, res);
 	expect(res.jsonData.type).to.equal("error");
@@ -98,7 +117,7 @@ async function test_getCharacterNotCreated() {
 
 async function test_deleteCharacter(index = 0) {
 	const sessionData = { userId: primaryAccount };
-	const req = new RequestMock({ characterName: characterNames[index] }, {}, sessionData);
+	const req = new RequestMock({ charaName: characterNames[index] }, {}, sessionData);
 	const res = new ResponseMock();
 	await controller.deleteCharacter(req, res);
 	expect(res.jsonData.data.deletedCount).to.equal(1);
