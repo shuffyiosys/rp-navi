@@ -9,9 +9,6 @@ const {
 	getCharacters,
 	getCharacterProfile,
 	updateProfile,
-	addPendingFriend,
-	confirmPendingFriend,
-	removeFriend,
 	deleteCharacter,
 } = require("../controllers/character-controller");
 
@@ -26,12 +23,6 @@ router.get("/list", getCharacters);
 router.post("/logout", createCharacter);
 
 router.post("/updateProfile", updateProfile);
-
-router.post("/addFriend", addPendingFriend);
-
-router.post("/confirmFriend", confirmPendingFriend);
-
-router.post("/removeFriend", removeFriend);
 
 router.post("/delete", deleteCharacter);
 

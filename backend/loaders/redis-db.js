@@ -1,18 +1,18 @@
 /**
  * @file Establishes different clients to connect to a Redis server
  */
-
-const util = require("util");
+const config = require('../config/config')();
+const { promisify } = require("util");
 const redis = require("redis");
 const { logger } = require("../utils/logger");
 
 const clients = {};
 let connectionTimeout = null;
 
-function startClient(config, clientName, promisify = false) {
+function startClient(clientName, promisify = false) {
 	logger.info(`Connecting to Redis...`);
 	if (clientName in clients === true) {
-		logger.error(`Redis client ${clientName} already exists. Abort setting up a connection`);
+		logger.notice(`Redis client ${clientName} already exists. Abort setting up a connection`);
 		return null;
 	}
 
@@ -31,7 +31,7 @@ function startClient(config, clientName, promisify = false) {
 	clients[clientName] = newClient;
 
 	if (promisify === true) {
-		promisifyFunctions(newClient);
+		promisifyClient(newClient);
 	}
 
 	setupEventListeners({ conn: newClient });
@@ -42,27 +42,27 @@ function connectionExists(clientName) {
 	return clientName in clients;
 }
 
-async function closeConnections() {
+async function closeAllConnections() {
 	Object.keys(clients).forEach(async function (client) {
 		await clients[client].quit();
 	});
 }
 
-function promisifyFunctions(client) {
-	client.quit = util.promisify(client.quit);
-	client.get = util.promisify(client.get);
-	client.set = util.promisify(client.set);
-	client.hmset = util.promisify(client.hmset);
-	client.hgetall = util.promisify(client.hgetall);
-	client.sadd = util.promisify(client.sadd);
-	client.srem = util.promisify(client.srem);
-	client.smembers = util.promisify(client.smembers);
-	client.llen = util.promisify(client.llen);
-	client.rpush = util.promisify(client.rpush);
-	client.lpop = util.promisify(client.lpop);
-	client.lrange = util.promisify(client.lrange);
-	client.del = util.promisify(client.del);
-	client.exists = util.promisify(client.exists);
+function promisifyClient(client) {
+	promisify(client.quit).bind(client);
+	promisify(client.get).bind(client);
+	promisify(client.set).bind(client);
+	promisify(client.hmset).bind(client);
+	promisify(client.hgetall).bind(client);
+	promisify(client.sadd).bind(client);
+	promisify(client.srem).bind(client);
+	promisify(client.smembers).bind(client);
+	promisify(client.llen).bind(client);
+	promisify(client.rpush).bind(client);
+	promisify(client.lpop).bind(client);
+	promisify(client.lrange).bind(client);
+	promisify(client.del).bind(client);
+	promisify(client.exists).bind(client);
 }
 
 function setupEventListeners({ conn }) {
@@ -104,5 +104,5 @@ module.exports = {
 	startClient,
 	connectionExists,
 	getClient,
-	closeConnections,
+	closeAllConnections,
 };

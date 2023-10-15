@@ -6,6 +6,10 @@ function getConfig(fileName = ".env") {
 		environment: process.env.NODE_ENV || "production",
 		httpPort: process.env.PORT || 3000,
 		httpsPort: process.env.HTTPS_PORT || 3001,
+		socketio: {
+			httpPort: process.env.SOCKET_HTTP_PORT || 3030,
+			httpsPort: process.env.SOCKET_HTTPS_PORT || 3031,
+		},
 		database: {
 			mongo: {
 				url: process.env.MONGO_DB_IP || "localhost",

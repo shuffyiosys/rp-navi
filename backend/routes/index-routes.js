@@ -18,6 +18,8 @@ router.get("/test", (req, res) => {
 	res.render("test", pageData);
 });
 
+router.get("/favicon.ico", (req, res) => res.status(204));
+
 module.exports = {
 	router,
 	basepath,

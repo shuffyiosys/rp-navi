@@ -43,8 +43,8 @@ function load(app, config) {
 	/* Create and start server ***************************************************/
 	if (config.certs.certFile && config.certs.keyFile) {
 		let server = http.createServer(app);
-		const certFilename = path.join(__dirname, "..", config.certs.path, config.certs.certFile);
-		const keyFilename = path.join(__dirname, "..", config.certs.path, config.certs.keyFile);
+		const certFilename = path.join(config.certs.path, config.certs.certFile);
+		const keyFilename = path.join(config.certs.path, config.certs.keyFile);
 		logger.debug(`Using cert file ${certFilename}, key file ${keyFilename}`);
 		if (fs.existsSync(keyFilename) && fs.existsSync(certFilename)) {
 			let options = {
