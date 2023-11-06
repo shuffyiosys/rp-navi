@@ -32,6 +32,9 @@ async function setupApp() {
 	const express = require("express");
 	let app = express();
 
+	/* Load and setup security packages **************************************/
+	require("./loaders/security")(app, config);
+
 	/* Load and setup server middleware **************************************/
 	const clientPaths = {
 		views: path.join(__dirname, "../client/views"),
@@ -39,18 +42,16 @@ async function setupApp() {
 	};
 	require("./loaders/server-middleware")(app, clientPaths);
 
+	/* Setup sessioning ******************************************************/
+	let sessionParams;
+	// if (redisClient) {
+	// 	sessionParams = require("./loaders/session").setupRedisSession(app, config.session, redisClient);
+	// } else {
+	sessionParams = require("./loaders/session").setupMemorySession(app, config.session);
+	// }
+
 	/* Setup Routes **********************************************************/
 	require("./loaders/routes")(app);
-
-	/* Load and setup security packages **************************************/
-	require("./loaders/security")(app, config);
-
-	/* Setup sessioning ******************************************************/
-	if (redisClient) {
-		require("./loaders/session").setupRedisSession(app, config.session, redisClient);
-	} else {
-		require("./loaders/session").setupMemorySession(app, config.session);
-	}
 
 	/** Create and launch the server *****************************************/
 	let servers = { httpServer: null, httpsServer: null };
@@ -58,6 +59,7 @@ async function setupApp() {
 
 	/** Startup Socket.IO servers */
 	let socketIoServer = require("./sockets/socket-io")(servers.httpServer);
+	// socketIoServer.engine.use(sessionParams);
 
 	/** Start servers ********************************************************/
 	/** Start the HTTPS server if it was created, otherwise start the HTTP
