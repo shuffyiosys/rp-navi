@@ -12,7 +12,9 @@ function load(server) {
 function listenerCallback(io) {
 	// Create Redis connection
 	io.on("connection", function (socket) {
+		const session = socket.request.session;
 		console.log("Socket connected", socket.id);
+		console.log("HTTP session", session);
 		socket.emit("connected");
 	});
 	io.of("/chat").on("connection", (socket) => {

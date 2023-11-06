@@ -44,11 +44,11 @@ async function setupApp() {
 
 	/* Setup sessioning ******************************************************/
 	let sessionParams;
-	// if (redisClient) {
-	// 	sessionParams = require("./loaders/session").setupRedisSession(app, config.session, redisClient);
-	// } else {
-	sessionParams = require("./loaders/session").setupMemorySession(app, config.session);
-	// }
+	if (redisClient) {
+		sessionParams = require("./loaders/session").setupRedisSession(app, config.session, redisClient);
+	} else {
+		sessionParams = require("./loaders/session").setupMemorySession(app, config.session);
+	}
 
 	/* Setup Routes **********************************************************/
 	require("./loaders/routes")(app);
@@ -59,7 +59,7 @@ async function setupApp() {
 
 	/** Startup Socket.IO servers */
 	let socketIoServer = require("./sockets/socket-io")(servers.httpServer);
-	// socketIoServer.engine.use(sessionParams);
+	socketIoServer.engine.use(sessionParams);
 
 	/** Start servers ********************************************************/
 	/** Start the HTTPS server if it was created, otherwise start the HTTP
