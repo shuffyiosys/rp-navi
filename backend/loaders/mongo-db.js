@@ -53,13 +53,17 @@ async function setup(dbParameters) {
 	await mongoose.connect(MONGO_DB_URI, mongooseOptions).catch((err) => {
 		logger.error(err);
 	});
+
+	return mongoose;
 }
 
-function initModels() {
-	const staticRoutesPath = path.join(__dirname, "..", "models");
-	const files = fs.readdirSync(staticRoutesPath);
+function initModels(modelPath = "") {
+	if (modelPath == "") {
+		modelPath = path.join(__dirname, "..", "models");
+	}
+	const files = fs.readdirSync(modelPath);
 	files.forEach((file) => {
-		const filepath = path.join(staticRoutesPath, file);
+		const filepath = path.join(modelPath, file);
 		try {
 			require(filepath);
 		} catch (e) {
@@ -68,24 +72,7 @@ function initModels() {
 	});
 }
 
-/**
- * Gets the connection state to the database
- * @returns MongoDB connection state
- */
-function getConnectionState() {
-	return mongoose.connection.readyState;
-}
-
-/**
- * Closes the MongoDB connection
- */
-async function closeConnection() {
-	await mongoose.connection.close();
-}
-
 module.exports = {
 	setup,
 	initModels,
-	getConnectionState,
-	closeConnection,
 };

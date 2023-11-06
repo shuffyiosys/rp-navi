@@ -2,11 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const { logger } = require("../utils/logger");
 
-function load(app) {
-	const staticRoutesPath = path.join(__dirname, "..", "routes");
-	const files = fs.readdirSync(staticRoutesPath);
+function load(app, routePath = "") {
+	if (routePath == "") {
+		routePath = path.join(__dirname, "..", "routes");
+	}
+	const files = fs.readdirSync(routePath);
 	files.forEach((file) => {
-		const filepath = path.join(staticRoutesPath, file);
+		const filepath = path.join(routePath, file);
 		const router = require(filepath);
 
 		try {

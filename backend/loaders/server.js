@@ -6,95 +6,74 @@ const fs = require("fs");
 const { logger } = require("../utils/logger");
 const { PageRenderParams } = require("../classes/page-render-params");
 
-function load(app, config) {
-	// catch 404 and forward to error handler
-	app.use(function (req, res, next) {
-		res.status(404);
-		if (process.env.NODE_ENV === "development") {
-			next(createError(404));
-		} else {
-			const data = new PageRenderParams("Page not found", req.session, res.locals);
-			next(res.render("404", data));
-		}
-	});
+async function createServers(app, config) {
+	// Setup error handlers
+	app.use(handleError404);
+	app.use(handleErrors);
 
-	// error handler
-	app.use(function (err, req, res, next) {
-		logger.error(`The server ran into a problem: ${err.stack || err}`);
+	let servers = {
+		httpServer: http.createServer(app),
+		httpsServer: null,
+	};
 
-		// Show error on web page if in a development environment.
-		if (req.app.get("env") === "development") {
-			res.locals.message = err.message;
-			res.locals.error = err;
-		} else {
-			res.locals.message = "The server encountered a problem 🙁";
-			res.locals.error = {};
-		}
-		logger.error(`${err.message}\n${err.stack}`);
-
-		// render the error page
-		res.status(err.status || 500);
-		let data = new PageRenderParams("Website error", req.session, res.locals);
-		data.message = res.locals.message;
-		data.error = res.locals.error;
-		res.render("error", data);
-	});
-
-	/* Create and start server ***************************************************/
+	/* Create HTTPS server */
 	if (config.certs.certFile && config.certs.keyFile) {
-		let server = http.createServer(app);
-		const certFilename = path.join(config.certs.path, config.certs.certFile);
-		const keyFilename = path.join(config.certs.path, config.certs.keyFile);
-		logger.debug(`Using cert file ${certFilename}, key file ${keyFilename}`);
-		if (fs.existsSync(keyFilename) && fs.existsSync(certFilename)) {
-			let options = {
-				key: fs.readFileSync(keyFilename),
-				cert: fs.readFileSync(certFilename),
-			};
-			server = https.createServer(options, app);
-			logger.info("Starting https server at port " + config.httpsPort);
-			logger.info("Starting http server at port " + config.httpPort);
-			server.listen(config.httpsPort, () => {
-				logger.info("server started.");
-				onListening(server);
-			});
-			server.on("error", (error) => {
-				onError(error, config.httpsPort);
-			});
+		servers.httpsServer = startHttpsServer(app, config);
+	}
 
-			// Create HTTP server to redirect requests to HTTPS
-			http.createServer((req, res) => {
-				const portIdx = req.headers.host.indexOf(":");
-				let hostname = req.headers.host;
-				if (portIdx > -1) {
-					hostname = req.headers.host.substring(0, portIdx);
-				}
-				res.writeHead(301, {
-					location: `https://${hostname}:${config.httpsPort}${req.url}`,
-				});
-				res.end();
-			}).listen(config.httpPort);
-		}
-		// HTTP only fallback
-		else {
-			logger.warn(`THIS SERVER IS BEING RUN IN HTTP ONLY MODE`);
-			startHttpServer(server, config.httpPort);
-		}
+	return servers;
+}
+
+function startHttpsServer(app, config) {
+	let servers = {
+		httpServer: http.createServer(app),
+		httpsServer: null,
+	};
+	const certFilename = path.join(config.certs.path, config.certs.certFile);
+	const keyFilename = path.join(config.certs.path, config.certs.keyFile);
+	logger.debug(`Using cert file ${certFilename}, key file ${keyFilename}`);
+
+	if (fs.existsSync(keyFilename) == false || fs.existsSync(certFilename) == false) {
+		return server;
+	}
+
+	let options = {
+		key: fs.readFileSync(keyFilename),
+		cert: fs.readFileSync(certFilename),
+	};
+	servers.httpsServer = https.createServer(options, app);
+
+	return servers;
+}
+
+function startServers(servers, config, type = "http") {
+	const httpServer = servers.httpServer;
+	const httpsServer = servers.httpsServer;
+
+	if (type == "https") {
+		const port = config.httpsPort;
+		logger.info(`Starting ${type} server at port ${port}`);
+		httpsServer.listen(port, () => onListening(httpsServer));
+		httpsServer.on("error", (error) => onError(error, port));
+
+		// Create HTTP server to redirect requests to HTTPS
+		logger.info(`Starting http redirect server at port ${config.httpPort}`);
+		httpServer = http.createServer(redirectRequests).listen(config.httpPort);
 	} else {
-		let server = http.createServer(app);
-		startHttpServer(server, config.httpPort);
+		const port = config.httpPort;
+		logger.info(`Starting ${type} server at port ${port}`);
+		httpServer.listen(port, () => onListening(httpServer));
+		httpServer.on("error", (error) => onError(error, port));
 	}
 }
 
-function startHttpServer(server, port) {
-	logger.info("Starting http server at port " + port);
-	server.listen(port, () => {
-		logger.info("server started.");
-		onListening(server);
-	});
-	server.on("error", (error) => {
-		onError(error, port);
-	});
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+function onListening(server) {
+	let addr = server.address();
+	let bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+	logger.debug("Listening on " + bind);
 }
 
 function onError(error, port) {
@@ -117,13 +96,50 @@ function onError(error, port) {
 	}
 }
 
-/**
- * Event listener for HTTP server "listening" event.
- */
-function onListening(server) {
-	let addr = server.address();
-	let bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
-	logger.debug("Listening on " + bind);
+function handleError404(req, res, next) {
+	res.status(404);
+	if (process.env.NODE_ENV === "development") {
+		logger.info(`Client tried to access: ${req.url}`);
+		next(createError(404));
+	} else {
+		const data = new PageRenderParams("Page not found", req.session, res.locals);
+		next(res.render("404", data));
+	}
 }
 
-module.exports = load;
+function handleErrors(err, req, res, next) {
+	logger.error(`The server ran into a problem: ${err.stack || err}`);
+
+	// Show error on web page if in a development environment.
+	if (req.app.get("env") === "development") {
+		res.locals.message = err.message;
+		res.locals.error = err;
+	} else {
+		res.locals.message = "The server encountered a problem 🙁";
+		res.locals.error = {};
+	}
+	logger.error(`${err.message}\n${err.stack}`);
+
+	// render the error page
+	res.status(err.status || 500);
+	let data = new PageRenderParams("Website error", req.session, res.locals);
+	data.message = res.locals.message;
+	data.error = res.locals.error;
+	res.render("error", data);
+}
+
+function redirectRequests(req, res) {
+	let hostname = req.headers.host;
+	if (portIdx > -1) {
+		hostname = req.headers.host.substring(0, portIdx);
+	}
+	res.writeHead(301, {
+		location: `https://${hostname}:${config.httpsPort}${req.url}`,
+	});
+	res.end();
+}
+
+module.exports = {
+	createServers,
+	startServers,
+};

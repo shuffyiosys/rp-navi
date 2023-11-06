@@ -59,7 +59,7 @@ const httpLogger = createLogger({
 			format: "YYYY-MM-DD HH:mm:ss",
 		}),
 		splat(),
-		printf((info) => `${info.timestamp}: ${info.message}`)
+		printf((info) => `${info.timestamp}: ${info.message}`.split("\n")[0])
 	),
 	transports: getOutputType("http"),
 });
@@ -68,8 +68,12 @@ httpLogger.stream = {
 	write: (message) => httpLogger.info(message),
 };
 
-function formatJson(jsonObj) {
-	return JSON.stringify(jsonObj, null, 4);
+function formatJson(jsonObj, pretty = true) {
+	if (pretty) {
+		return JSON.stringify(jsonObj, null, 4);
+	} else {
+		return JSON.stringify(jsonObj);
+	}
 }
 
 module.exports = {
