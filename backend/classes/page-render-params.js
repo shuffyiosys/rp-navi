@@ -5,7 +5,6 @@ class PageRenderParams {
 	constructor(title, session, locals) {
 		this.headTitle = `${title}`;
 		this.title = `${title}`;
-		this.loggedIn = "editor" in session;
 		this.scriptNonce = locals.scriptNonce;
 		this.styleNonce = locals.styleNonce;
 	}

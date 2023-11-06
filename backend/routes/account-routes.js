@@ -3,7 +3,7 @@
  *
  */
 const router = require("express").Router();
-const { check, query } = require("express-validator/check");
+const { check, query } = require("express-validator");
 
 const {
 	createAccount,
