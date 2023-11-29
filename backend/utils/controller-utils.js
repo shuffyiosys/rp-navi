@@ -4,6 +4,7 @@
  */
 
 const { validationResult } = require("express-validator");
+const { AjaxResponse } = require("../classes/ajax-response");
 
 /**
  * @brief Checks for commonly expected errors

@@ -53,12 +53,15 @@ async function setupApp() {
 	/* Setup Routes **********************************************************/
 	require("./loaders/routes")(app);
 
+	/* Initialize other modules */
+	require("./services/chatroom-service").loadModule(redisClient);
+
 	/** Create and launch the server *****************************************/
 	let servers = { httpServer: null, httpsServer: null };
 	servers = await require("./loaders/server").createServers(app, config);
 
 	/** Startup Socket.IO servers */
-	let socketIoServer = require("./sockets/socket-io")(servers.httpServer);
+	let socketIoServer = require("./loaders/socket-io")(servers.httpServer, redisClient);
 	socketIoServer.engine.use(sessionParams);
 
 	/** Start servers ********************************************************/

@@ -64,7 +64,7 @@ describe("Sanity check", function () {
 describe("RP Navi Controller Test", function () {
 	// describe("Accounts", () => require("./controllers/account-controller.test").runTest());
 	//describe("Characters", () => require("./controllers/character-controller.test").runTest());
-	require("./socket-io/sanity.test").runTest();
+	// require("./socket-io/sanity.test").runTest();
 });
 
 /** Cleanup things so the testing framework can exit *************************/

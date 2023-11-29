@@ -28,7 +28,7 @@ html
 					button#resetPasswordBtn Reset Password
 
 			div.formStyle
-				p Logged in actions
+				p Account Actions
 				button#logOutBtn Logout 
 				button#getData Get account data
 				button#getVerification Resend Verification
@@ -45,6 +45,18 @@ html
 				br
 				br
 				button#deleteAccountBtn Delete
+			div.formStyle
+				p Character Actions
+				button#getCharactersBtn Get characters
+				br
+				br
+				label Create character: 
+				input#newCharacterInput(type="text")
+				button#newCharacter Create
+				br
+				br
+				div#characterList
+					div.flex-container
 		div.formStyle
 			p Messages
 			ul#statusMessage

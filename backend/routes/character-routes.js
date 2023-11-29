@@ -20,7 +20,7 @@ router.get("/profile", getCharacterProfile);
 router.get("/list", getCharacters);
 
 /* POST routers **************************************************************/
-router.post("/logout", createCharacter);
+router.post("/create", createCharacter);
 
 router.post("/updateProfile", updateProfile);
 
