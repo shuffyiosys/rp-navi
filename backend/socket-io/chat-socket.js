@@ -1,14 +1,18 @@
 const { logger, formatJson } = require("../utils/logger");
+const { SocketIoResponse } = require("../classes/socket-io-response");
 
-const { getCharacters } = require("../services/character-service");
-const chatService = require("../services/chatroom-service");
+const chatService = require("../services/redis/chatroom-service");
+const characterService = require("../services/redis/character-service");
 
 async function setupSocket(io, socket) {
-	await addCharacters(socket);
 	sendRoomList(socket);
 
-	socket.on("disconnect", function () {
-		handle_disconnect(socket);
+	socket.on("get rooms", (data, ack) => {
+		const status = new SocketIoResponse();
+		status.success = true;
+		ack(status);
+		chatService.getPublicRoomNames().then((roomList) => socket.emit("room list", roomList));
+		sendRoomList(socket);
 	});
 
 	socket.on("create room", (data, ack) =>
@@ -80,13 +84,6 @@ async function sendRoomList(socket) {
 	socket.emit("room list", roomList);
 }
 
-async function addCharacters(socket) {
-	const userId = socket.request.session.userId;
-	let characters = await getCharacters(userId);
-	chatService.addUserCharacters(userId, characters);
-	socket.emit("character list", characters);
-}
-
 async function verifyParameters(socket, data) {
 	const userId = socket.request.session.userId;
 	const roomName = data["roomName"];
@@ -95,7 +92,7 @@ async function verifyParameters(socket, data) {
 
 	if (roomName == undefined || characterName == undefined) {
 		return status;
-	} else if ((await chatService.verifyUserOwnsCharacter(userId, characterName)) == false) {
+	} else if ((await characterService.verifyUserOwnsCharacter(userId, characterName)) == false) {
 		status.msg = `User does not own ${characterName}`;
 		return status;
 	} else if ((await chatService.checkRoomExists(roomName)) == false) {
@@ -125,12 +122,8 @@ async function mainHandler(socket, data, handlerFunc) {
 	return status;
 }
 
-function handle_disconnect(socket) {
-	logger.info("Handling /chat disconnect");
-}
-
 async function handle_createRoom(socket, data) {
-	logger.info(`Handling create room ${formatJson(data)}`);
+	logger.debug(`Handling create room ${formatJson(data)}`);
 
 	const userId = socket.request.session.userId;
 	const roomName = data["roomName"];
@@ -141,7 +134,7 @@ async function handle_createRoom(socket, data) {
 		return status;
 	} else if ((await chatService.checkRoomExists(roomName)) == 1) {
 		status.msg = "Room already exists";
-	} else if ((await chatService.verifyUserOwnsCharacter(userId, characterName)) == 0) {
+	} else if ((await characterService.verifyUserOwnsCharacter(userId, characterName)) == 0) {
 		status.msg = `User does not own ${data.characterName}`;
 	} else {
 		status.success = true;
@@ -161,7 +154,7 @@ async function handle_createRoom(socket, data) {
 }
 
 async function handle_joinRoom(socket, data) {
-	logger.info("handling join room");
+	logger.debug("handling join room");
 
 	const roomName = data["roomName"];
 	const characterName = data["characterName"];
@@ -193,7 +186,7 @@ async function handle_joinRoom(socket, data) {
 }
 
 async function handle_leaveRoom(socket, data) {
-	logger.info("handling leave room");
+	logger.debug("handling leave room");
 
 	const roomName = data["roomName"];
 	const characterName = data["characterName"];
@@ -209,7 +202,7 @@ async function handle_leaveRoom(socket, data) {
 }
 
 async function handle_postMessage(socket, data) {
-	logger.info("handling post message");
+	logger.debug("handling post message");
 
 	const roomName = data["roomName"];
 	const characterName = data["characterName"];
@@ -223,7 +216,7 @@ async function handle_postMessage(socket, data) {
 }
 
 async function handle_getRoomInfo(data) {
-	logger.info(`hanlding get room info ${formatJson(data)}`);
+	logger.debug(`hanlding get room info ${formatJson(data)}`);
 	const roomName = data["roomName"];
 	let status = { success: false, msg: "" };
 	let roomData = {};
@@ -243,7 +236,7 @@ async function handle_getRoomInfo(data) {
 }
 
 async function handle_modAction(socket, data) {
-	logger.info("handling mod action");
+	logger.debug("handling mod action");
 
 	const roomName = data["roomName"];
 	const characterName = data["characterName"];
@@ -297,7 +290,7 @@ async function handle_modAction(socket, data) {
 }
 
 async function handle_setRoomSettings(socket, data) {
-	logger.info(`handling set room settings ${formatJson(data)}`);
+	logger.debug(`handling set room settings ${formatJson(data)}`);
 
 	const roomName = data["roomName"];
 	const characterName = data["characterName"];

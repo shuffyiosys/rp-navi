@@ -19,12 +19,13 @@ async function setupApp() {
 	}
 
 	const RedisDB = require("./loaders/redis-db");
-	const redisClient = await RedisDB.connectToServer(null);
+	await RedisDB.connectToServer(null);
 	logger.info(`Checking Redis connection via pinging...`);
-	if ((await redisClient.ping()) != "PONG") {
+	if ((await RedisDB.pingServer()) == false) {
 		logger.warn(`Could not connect to the Redis server, exiting.`);
 		process.exit(0);
 	}
+	const redisClient = RedisDB.redisClient;
 
 	MongoDB.initModels();
 
@@ -54,7 +55,7 @@ async function setupApp() {
 	require("./loaders/routes")(app);
 
 	/* Initialize other modules */
-	require("./services/chatroom-service").loadModule(redisClient);
+	require("./services/redis/chatroom-service").loadModule();
 
 	/** Create and launch the server *****************************************/
 	let servers = { httpServer: null, httpsServer: null };

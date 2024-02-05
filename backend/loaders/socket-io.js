@@ -1,29 +1,52 @@
 const { Server } = require("socket.io");
 const { logger } = require("../utils/logger");
 
-const chatHandlers = require("../socket-io/chat-socket");
-const dmHandlers = require("../socket-io/dm-handlers");
 const systemHandlers = require("../socket-io/system-event-handlers");
 
-function load(server, redisClient) {
+function load(server) {
 	let io = new Server(server, { cors: { origin: "*" } });
 
 	io.on("connection", async function (socket) {
-		socket.emit("info", "Welcome to RP Navi!");
+		socket.emit("system message", "Welcome to RP Navi!");
+		logger.debug(`Socket ${socket.id} connected`);
 
-		systemHandlers.setupHandlers(io, socket, redisClient);
-
-		/* If the user is logged in, send their characters. */
-		const session = socket.request.session;
-		if ("userId" in session) {
-			chatHandlers.setupSocket(io, socket, redisClient);
-			dmHandlers.setupSocket(io, socket, redisClient);
-		} else {
-			socket.emit("login error", {});
-		}
+		systemHandlers.setupHandlers(io, socket);
+		await setupSocketSession(io, socket);
 	});
 
 	return io;
+}
+
+const chatHandlers = require("../socket-io/chat-socket");
+const dmHandlers = require("../socket-io/dm-handlers");
+const userHandlers = require("../socket-io/user-socket");
+
+const userService = require("../services/redis/user-service");
+const characterService = require("../services/redis/character-service");
+
+async function setupSocketSession(io, socket) {
+	const session = socket.request.session;
+	if ("userId" in session == false) {
+		socket.emit("login error", {});
+		return;
+	}
+
+	const userId = session.userId;
+
+	let characterList = await characterService.getOwnedCharacters(userId);
+	if (characterList.length == 0) {
+		logger.debug(`Adding user's characters to cache`);
+		characterList = await characterService.addUserCharacters(userId);
+	}
+	socket.emit("character list", characterList);
+
+	userHandlers.setupSocket(io, socket);
+	dmHandlers.setupSocket(io, socket);
+	// chatHandlers.setupSocket(io, socket);
+
+	socket.on("disconnect", () => {
+		logger.debug(`Socket ${socket.id} disconnected`);
+	});
 }
 
 module.exports = load;

@@ -1,34 +1,8 @@
-const { logger, formatJson } = require("../utils/logger");
-const crypto = require("../utils/crypto");
+const { logger, formatJson } = require("../../utils/logger");
+const { redisClient } = require("../../loaders/redis-db");
+const crypto = require("../../utils/crypto");
 
-function warnFailedInit() {
-	var path = require("path");
-	var scriptName = path.basename(__filename);
-	logger.warn(`[${scriptName}] Redis client hasn't been initialized!`);
-}
-
-let redisClient = {
-	exists: warnFailedInit,
-	hmset: warnFailedInit,
-	hset: warnFailedInit,
-	hget: warnFailedInit,
-	hgetall: warnFailedInit,
-
-	smembers: warnFailedInit,
-	scard: warnFailedInit,
-	sismember: warnFailedInit,
-	sadd: warnFailedInit,
-	srem: warnFailedInit,
-
-	llen: warnFailedInit,
-	lrange: warnFailedInit,
-	rpush: warnFailedInit,
-	del: warnFailedInit,
-};
-
-function loadModule(redisConnection) {
-	redisClient = redisConnection;
-
+function loadModule() {
 	getPublicRoomNames().then((rooms) => {
 		rooms.forEach((room) => {
 			clearInRoom(room);
@@ -237,31 +211,6 @@ async function getRoomLog(roomName) {
 	return chatlog;
 }
 
-/*****************************************************************************/
-async function checkUserCharacters(userId) {
-	return await redisClient.scard(`user:${userId}`);
-}
-
-async function addUserCharacters(userId, characters) {
-	if (Array.isArray(characters) == false) {
-		return 0;
-	}
-
-	let characterIds = [];
-	characters.forEach((character) => characterIds.push(character.charaName));
-	let result = await redisClient.sadd(`user:${userId}`, characterIds);
-
-	// Using this as a cache, so let this expire after some time.
-	const EXPIRY_TIME = 48 * 60 * 60; // 48 hours in seconds
-	redisClient.expire(`user:${userId}`, EXPIRY_TIME);
-
-	return result;
-}
-
-async function verifyUserOwnsCharacter(userId, characterId) {
-	return await redisClient.sismember(`user:${userId}`, characterId);
-}
-
 module.exports = {
 	loadModule,
 
@@ -299,8 +248,4 @@ module.exports = {
 
 	pushRoomLog,
 	getRoomLog,
-
-	checkUserCharacters,
-	addUserCharacters,
-	verifyUserOwnsCharacter,
 };

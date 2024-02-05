@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
-const { MODEL_NAMES } = require("../models/model-names");
+const { MODEL_NAMES } = require("../../models/model-names");
 const model = mongoose.model(MODEL_NAMES.VERIFY_TOKENS);
-const { generateKey } = require("../utils/crypto");
-const { logger } = require("../utils/logger");
+const { generateKey } = require("../../utils/crypto");
+const { logger } = require("../../utils/logger");
 
 async function generateToken(action, referenceId) {
 	const token = generateKey();

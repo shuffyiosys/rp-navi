@@ -1,7 +1,7 @@
 const { validationResult } = require("express-validator");
 
 const { AjaxResponse } = require("../classes/ajax-response");
-const service = require("../services/character-service");
+const service = require("../services/mongodb/character-service");
 const { logger, formatJson } = require("../utils/logger");
 const { verifyNoReqErrors } = require("../utils/controller-utils");
 

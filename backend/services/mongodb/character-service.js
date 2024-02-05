@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
-const { MODEL_NAMES } = require("../models/model-names");
-const { logger, formatJson } = require("../utils/logger");
+const { MODEL_NAMES } = require("../../models/model-names");
+const { logger, formatJson } = require("../../utils/logger");
 const model = mongoose.model(MODEL_NAMES.CHARACTER);
 
 async function createCharacter(characterName, accountId) {
@@ -31,6 +31,10 @@ async function getCharacterProfile(characterName) {
 	return model.findOne({ charaName: characterName }, "charaName profileHtml profileCss profileJs");
 }
 
+async function getCharacterData(characterName) {
+	return model.findOne({ charaName: characterName });
+}
+
 async function updateProfile(characterName, accountId, updateData) {
 	const ownerId = ObjectId(accountId);
 	const characterData = await model.findOne({ charaName: characterName, owner: ownerId });
@@ -56,6 +60,7 @@ module.exports = {
 	getCharacterExists,
 	getCharacters,
 	getCharacterProfile,
+	getCharacterData,
 	updateProfile,
 	deleteCharacter,
 };

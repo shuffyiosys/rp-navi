@@ -4,7 +4,32 @@
 const Redis = require("ioredis");
 const { logger, formatJson } = require("../utils/logger");
 
-async function connectToServer(serverConfig) {
+let redisClient = {
+	exists: warnFailedInit,
+	hmset: warnFailedInit,
+	hset: warnFailedInit,
+	hget: warnFailedInit,
+	hgetall: warnFailedInit,
+
+	smembers: warnFailedInit,
+	scard: warnFailedInit,
+	sismember: warnFailedInit,
+	sadd: warnFailedInit,
+	srem: warnFailedInit,
+
+	llen: warnFailedInit,
+	lrange: warnFailedInit,
+	rpush: warnFailedInit,
+	del: warnFailedInit,
+};
+
+function warnFailedInit() {
+	var path = require("path");
+	var scriptName = path.basename(__filename);
+	logger.warn(`[${scriptName}] Redis client hasn't been initialized!`);
+}
+
+function connectToServer(serverConfig) {
 	let params = {
 		host: "localhost",
 		port: "6379",
@@ -20,10 +45,15 @@ async function connectToServer(serverConfig) {
 	}
 	logger.info(`Connecting to Redis server with params ${formatJson(params, false)}`);
 
-	const redisConnection = new Redis(params);
-	return redisConnection;
+	redisClient = new Redis(params);
+	module.exports.redisClient = redisClient;
+}
+
+async function pingServer() {
+	return (await redisClient.ping()) == "PONG";
 }
 
 module.exports = {
 	connectToServer,
+	pingServer,
 };

@@ -1,6 +1,4 @@
 const { logger } = require("../utils/logger");
-const { getCharacters } = require("../services/character-service");
-const { validateKeys } = require("../utils/socket-utils");
 
 async function setupHandlers(io, socket, redisClient) {
 	socket.on("disconnect", function () {

@@ -33,7 +33,9 @@ function startHttpsServer(app, config) {
 	const keyFilename = path.join(config.certs.path, config.certs.keyFile);
 	logger.debug(`Using cert file ${certFilename}, key file ${keyFilename}`);
 
-	if (fs.existsSync(keyFilename) == false || fs.existsSync(certFilename) == false) {
+	const keyFileExists = fs.existsSync(keyFilename);
+	const certFileExists = fs.existsSync(certFilename);
+	if (keyFileExists === false || certFileExists === false) {
 		return server;
 	}
 

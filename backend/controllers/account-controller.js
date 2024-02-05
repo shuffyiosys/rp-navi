@@ -7,11 +7,12 @@ const { validationResult } = require("express-validator");
 const { AjaxResponse } = require("../classes/ajax-response");
 const config = require("../config/config")();
 const { VERIFY_ACTION } = require("../data/verify-token-data");
-const accountService = require("../services/account-service");
-const verifyService = require("../services/verify-token-service");
+const accountService = require("../services/mongodb/account-service");
+const verifyService = require("../services/mongodb/verify-token-service");
 const mailer = require("../utils/mailer");
 const { logger, formatJson } = require("../utils/logger");
 const { verifyNoReqErrors } = require("../utils/controller-utils");
+const { PERMISSION_LEVELS } = require("../data/account-data");
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -123,7 +124,7 @@ async function loginAccount(req, res) {
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, body.email, null);
-	if (accountData) {
+	if (accountData && accountData.permission != PERMISSION_LEVELS.BANNED) {
 		createSession(req, accountData.id.toString());
 		res.json(new AjaxResponse("info", "Login successful", {}));
 	} else {

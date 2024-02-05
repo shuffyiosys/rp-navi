@@ -1,0 +1,11 @@
+const USER_STATUS_CODES = {};
+
+const DM_STATUS_CODES = {};
+
+const CHAT_STATUS_CODES = {};
+
+module.exports = {
+	USER_STATUS_CODES,
+	DM_STATUS_CODES,
+	CHAT_STATUS_CODES,
+};

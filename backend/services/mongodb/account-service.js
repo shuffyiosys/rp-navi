@@ -1,13 +1,13 @@
 /**
  * Handles all Account based data manipulation and interfaces with the database.
  */
-const { PERMISSION_LEVELS } = require("../data/account-data");
-const { logger, formatJson } = require("../utils/logger");
-const crypto = require("../utils/crypto");
+const { PERMISSION_LEVELS } = require("../../data/account-data");
+const { logger, formatJson } = require("../../utils/logger");
+const { MODEL_NAMES } = require("../../models/model-names");
+const crypto = require("../../utils/crypto");
 
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const { MODEL_NAMES } = require("../models/model-names");
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
 /**

@@ -14,6 +14,7 @@ let characterSchema = new mongoose.Schema(
 			type: String,
 			unique: true,
 			required: true,
+			index: true,
 		},
 
 		owner: ObjectId,
@@ -22,7 +23,7 @@ let characterSchema = new mongoose.Schema(
 		profileCss: String,
 		profileJs: String,
 	},
-	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }
+	{ collation: { locale: "en_US", strength: 2 }, timestamps: true, autoIndex: false }
 );
 
 mongoose.model(MODEL_NAMES.CHARACTER, characterSchema);
