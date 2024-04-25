@@ -2,17 +2,17 @@
  * @file controllers/account-controller.js
  * @brief Handles the input requests and outgoing responses for account related functionality
  */
-const { validationResult } = require("express-validator");
+const { validationResult } = require(`express-validator`);
 
-const { AjaxResponse } = require("../classes/ajax-response");
-const config = require("../config/config")();
-const { VERIFY_ACTION } = require("../data/verify-token-data");
-const accountService = require("../services/mongodb/account-service");
-const verifyService = require("../services/mongodb/verify-token-service");
-const mailer = require("../utils/mailer");
-const { logger, formatJson } = require("../utils/logger");
-const { verifyNoReqErrors } = require("../utils/controller-utils");
-const { PERMISSION_LEVELS } = require("../data/account-data");
+const { AjaxResponse } = require(`../classes/ajax-response`);
+const config = require(`../config/config`)();
+const { VERIFY_ACTION } = require(`../data/verify-token-data`);
+const accountService = require(`../services/mongodb/account-service`);
+const verifyService = require(`../services/mongodb/verify-token-service`);
+const mailer = require(`../utils/mailer`);
+const { logger, formatJson } = require(`../utils/logger`);
+const { verifyNoReqErrors } = require(`../utils/controller-utils`);
+const { PERMISSION_LEVELS } = require(`../data/account-data`);
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -59,8 +59,8 @@ async function createAccount(req, res) {
 		return;
 	} else if (await accountService.accountExists(body.email)) {
 		res.json({
-			type: "error",
-			msg: "An account with this email address exists",
+			type: `error`,
+			msg: `An account with this email address exists`,
 		});
 		logger.info(`${body.email} was being used to create another account`);
 		return;
@@ -73,14 +73,14 @@ async function createAccount(req, res) {
 
 		// Send verification mail based on environment.
 		// If prod, send actual mail, if development, send a test mail over ethereal
-		if (config.environment === "production") {
+		if (config.environment === `production`) {
 			// Send mail here
-		} else if (config.environment === "development") {
+		} else if (config.environment === `development`) {
 			mailer.sendVerifyMail(body.email, body.email, tokenData.token);
 		}
-		res.json(new AjaxResponse("info", "Account created", {}));
+		res.json(new AjaxResponse(`info`, `Account created`, {}));
 	} else {
-		res.json(new AjaxResponse("error", "Error creating an account", {}));
+		res.json(new AjaxResponse(`error`, `Error creating an account`, {}));
 	}
 }
 
@@ -90,13 +90,13 @@ async function createAccount(req, res) {
  * @param {*} res Response object to client
  */
 async function getAccountData(req, res) {
-	if ("userId" in req.session === false) {
-		res.json({ type: "error", msg: "Not logged in" });
+	if (`userId` in req.session === false) {
+		res.json({ type: `error`, msg: `Not logged in` });
 		return;
 	}
 
 	const accountData = await accountService.getAccountData(req.session.userId);
-	res.json(new AjaxResponse("info", "", accountData));
+	res.json(new AjaxResponse(`info`, ``, accountData));
 }
 
 /**
@@ -104,7 +104,7 @@ async function getAccountData(req, res) {
  */
 async function logoutAccount(req, res) {
 	destroySession(req, res);
-	res.json(new AjaxResponse("info", "Logged out"));
+	res.json(new AjaxResponse(`info`, `Logged out`));
 }
 
 /**
@@ -117,8 +117,8 @@ async function loginAccount(req, res) {
 	if (errors.isEmpty() === false) {
 		res.json(errors.array());
 		return true;
-	} else if ("userId" in req.session === true) {
-		res.json(new AjaxResponse("error", "Already logged in", {}));
+	} else if (`userId` in req.session === true) {
+		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
 		return true;
 	}
 
@@ -126,9 +126,9 @@ async function loginAccount(req, res) {
 	const accountData = await accountService.authenticateUser(body.password, body.email, null);
 	if (accountData && accountData.permission != PERMISSION_LEVELS.BANNED) {
 		createSession(req, accountData.id.toString());
-		res.json(new AjaxResponse("info", "Login successful", {}));
+		res.json(new AjaxResponse(`info`, `Login successful`, {}));
 	} else {
-		res.json(new AjaxResponse("error", "Login error", {}));
+		res.json(new AjaxResponse(`error`, `Login error`, {}));
 	}
 }
 
@@ -143,14 +143,14 @@ async function updateEmail(req, res) {
 		return;
 	} else if (await accountService.accountExists(body.newEmail)) {
 		res.json({
-			type: "error",
-			msg: "An account with this email address exists",
+			type: `error`,
+			msg: `An account with this email address exists`,
 		});
 		logger.info(`${body.email} was being used to create another account`);
 		return;
 	}
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse("info", "Email not updated", {
+	let response = new AjaxResponse(`info`, `Email not updated`, {
 		modifiedCount: 0,
 	});
 	if (accountData) {
@@ -176,7 +176,7 @@ async function updatePassword(req, res) {
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse("info", "Password not updated", { modifiedCount: 0 });
+	let response = new AjaxResponse(`info`, `Password not updated`, { modifiedCount: 0 });
 	if (accountData !== null) {
 		const updateData = await accountService.updatePassword(req.session.userId, body.newPassword);
 		response.data = updateData;
@@ -190,8 +190,8 @@ async function updatePassword(req, res) {
 async function requestPasswordReset(req, res) {
 	const errors = validationResult(req);
 	let response = new AjaxResponse(
-		"info",
-		"If the email address is registered, a password reset mail will be sent to it",
+		`info`,
+		`If the email address is registered, a password reset mail will be sent to it`,
 		{}
 	);
 	if (errors.isEmpty() === false) {
@@ -214,7 +214,7 @@ async function requestPasswordReset(req, res) {
 	const resetPwToken = await verifyService.generateToken(VERIFY_ACTION.RESET_PASSWORD, accountData.id.toString());
 	if (resetPwToken) {
 		response = new AjaxResponse(
-			"info",
+			`info`,
 			`Password reset generated at <a href="account/resetPassword?token=${resetPwToken.token}">this link</a>`,
 			{
 				token: resetPwToken.token,
@@ -227,14 +227,14 @@ async function requestPasswordReset(req, res) {
 async function verifyPasswordReset(req, res) {
 	const errors = validationResult(req);
 	if (errors.isEmpty() === false) {
-		res.redirect("/");
+		res.redirect(`/`);
 	}
 
 	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
 	if (resetToken) {
-		res.json(new AjaxResponse("info", "Password reset link verified", {}));
+		res.json(new AjaxResponse(`info`, `Password reset link verified`, {}));
 	} else {
-		res.json(new AjaxResponse("error", "Password reset expired", {}));
+		res.json(new AjaxResponse(`error`, `Password reset expired`, {}));
 	}
 }
 
@@ -248,16 +248,16 @@ async function updatePasswordReset(req, res) {
 	/** Make sure the reset token still exists, since it should expire */
 	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
 	if (!resetToken) {
-		res.json(new AjaxResponse("error", "Password reset request expired", {}));
+		res.json(new AjaxResponse(`error`, `Password reset request expired`, {}));
 		return;
 	}
 	await verifyService.deleteToken(req.query.token);
 	const accountData = await accountService.getAccountData(resetToken.referenceId);
-	let response = new AjaxResponse("error", "Error with handling password reset", {});
+	let response = new AjaxResponse(`error`, `Error with handling password reset`, {});
 	if (accountData) {
 		const updateData = await accountService.updatePassword(resetToken.referenceId, req.body.newPassword);
-		response.type = "info";
-		response.msg = "Password update information";
+		response.type = `info`;
+		response.msg = `Password update information`;
 		response.data = updateData;
 		res.json(response);
 	} else {
@@ -278,7 +278,7 @@ async function verifyAccount(req, res) {
 		return;
 	}
 
-	let response = new AjaxResponse("error", "Could not verify email", { verified: false });
+	let response = new AjaxResponse(`error`, `Could not verify email`, { verified: false });
 	const emailedVerified = await verifyService.verifyRequest(
 		req.query.token,
 		VERIFY_ACTION.VERIFY_EMAIL,
@@ -286,7 +286,7 @@ async function verifyAccount(req, res) {
 	);
 	if (emailedVerified == true) {
 		const updateData = await accountService.updateVerification(req.session.userId, true);
-		response = new AjaxResponse("info", "E-mail verified", updateData);
+		response = new AjaxResponse(`info`, `E-mail verified`, updateData);
 	}
 	res.json(response);
 }
@@ -297,10 +297,10 @@ async function resendVerification(req, res) {
 	}
 	await verifyService.deleteToken(undefined, VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
 	const newTokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
-	let response = new AjaxResponse("Error", "No verification token found", {});
+	let response = new AjaxResponse(`Error`, `No verification token found`, {});
 	if (newTokenData) {
 		response = new AjaxResponse(
-			"info",
+			`info`,
 			`New email verification sent: <a href="account/verify?token=${newTokenData.token}">this link</a>`,
 			{ token: newTokenData.token }
 		);
@@ -318,14 +318,14 @@ async function deleteAccount(req, res) {
 	if (errors.isEmpty() === false) {
 		res.json(errors.array());
 		return;
-	} else if ("userId" in req.session === false) {
-		res.json({ type: "error", msg: "Not logged in" });
+	} else if (`userId` in req.session === false) {
+		res.json({ type: `error`, msg: `Not logged in` });
 		return;
 	}
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse("info", "", { deletedCount: 0 });
+	let response = new AjaxResponse(`info`, ``, { deletedCount: 0 });
 	if (accountData) {
 		const updateData = await accountService.deleteAccount(req.session.userId);
 		response.data = updateData;

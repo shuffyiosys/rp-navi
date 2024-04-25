@@ -1,6 +1,6 @@
 const { logger, formatJson } = require("../../utils/logger");
 const { redisClient } = require("../../loaders/redis-db");
-const { getCharacters } = require("../mongodb/character-service");
+const { getCharacters, getCharacterCount } = require("../mongodb/character-service");
 
 async function addUserCharacters(userId) {
 	const characterList = await getCharacters(userId);
@@ -21,6 +21,17 @@ async function verifyUserOwnsCharacter(userId, characterId) {
 }
 
 async function getOwnedCharacters(userId) {
+	const characterList = await getCharacters(userId);
+	let characterIds = [];
+	characterList.forEach((character) => characterIds.push(character.charaName));
+	await redisClient.sadd(`characterLists:${userId}`, characterIds);
+
+	let characterOwnerMap = {};
+	characterList.forEach((character) => (characterOwnerMap[character.charaName] = userId));
+	await redisClient.hmset(`characterOwnerMaps`, characterOwnerMap);
+
+	return characterIds;
+
 	return await redisClient.smembers(`characterLists:${userId}`);
 }
 

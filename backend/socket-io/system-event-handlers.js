@@ -1,11 +1,16 @@
-const { logger } = require("../utils/logger");
+const { logger } = require(`../utils/logger`);
 
-async function setupHandlers(io, socket, redisClient) {
-	socket.on("disconnect", function () {
+async function setupHandlers(io, socket) {
+	socket.use(([event], next) => {
+		socket.event = event;
+		next();
+	});
+
+	socket.on(`disconnect`, function () {
 		handle_disconnect(socket);
 	});
 
-	socket.on("post system message", function (data) {
+	socket.on(`post system message`, function (data) {
 		handle_postSystemMessage(io, socket, data);
 	});
 }
@@ -19,7 +24,7 @@ function checkNumberConnections(socket) {
 	} else if (connections[remoteIp] < 3) {
 		connections[remoteIp]++;
 		logger.info(`User ${session.userId} connected using socket ID ${socket.id}`);
-		socket.emit("connected");
+		socket.emit(`connected`);
 	} else {
 		logger.info(`User ${session.userId} has too many connections`);
 		socket.disconnect();
@@ -27,15 +32,15 @@ function checkNumberConnections(socket) {
 }
 
 function handle_disconnect(socket) {
-	logger.info("Handling /disconnect: ", socket.id);
+	logger.info(`Handling /disconnect: `, socket.id);
 }
 
 function handle_sendAccountInfo(io, socket, data) {
-	logger.info("Handling /send account info");
+	logger.info(`Handling /send account info`);
 }
 
 function handle_postSystemMessage(io, socket, data) {
-	logger.info("Handling /post system message");
+	logger.info(`Handling /post system message`);
 }
 
 module.exports = {

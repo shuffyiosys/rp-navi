@@ -27,6 +27,11 @@ async function getCharacters(accountId) {
 	return model.find({ owner: ownerId }, "charaName");
 }
 
+async function getCharacterCount(accountId) {
+	const ownerId = ObjectId(accountId);
+	return model.count({ owner: ownerId });
+}
+
 async function getCharacterProfile(characterName) {
 	return model.findOne({ charaName: characterName }, "charaName profileHtml profileCss profileJs");
 }
@@ -59,6 +64,7 @@ module.exports = {
 	createCharacter,
 	getCharacterExists,
 	getCharacters,
+	getCharacterCount,
 	getCharacterProfile,
 	getCharacterData,
 	updateProfile,

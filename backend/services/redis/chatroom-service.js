@@ -1,6 +1,5 @@
 const { logger, formatJson } = require("../../utils/logger");
 const { redisClient } = require("../../loaders/redis-db");
-const crypto = require("../../utils/crypto");
 
 function loadModule() {
 	getPublicRoomNames().then((rooms) => {
@@ -11,21 +10,11 @@ function loadModule() {
 }
 
 /*****************************************************************************/
-async function createRoom(roomName, ownerId, description = "", isPrivate = false, password = "") {
+async function createRoom(data) {
+	const roomName = data.roomName;
 	const roomQuery = `room:${roomName}`;
-	const data = {
-		name: roomName,
-		description: description,
-		owner: ownerId,
-		private: isPrivate.toString(),
-		password: password,
-	};
+	const isPrivate = data["privateRoom"] || false;
 
-	if (password) {
-		const salt = await crypto.generateKey();
-		const hash = await crypto.getPasswordHash(password, salt);
-		data.password = hash;
-	}
 	if (isPrivate == false) {
 		await redisClient.sadd("publicRoomNames", roomName);
 	}
@@ -138,10 +127,10 @@ async function isPasswordNeeded(roomName) {
 	return roomPassword.length > 0;
 }
 
-async function verifyRoomPassword(roomName, password) {
+async function verifyPassword(roomName, password) {
 	const roomQuery = `room:${roomName}`;
 	const roomPassword = await redisClient.hget(roomQuery, "password");
-	return await crypto.verifyPassword(roomPassword, password);
+	return roomPassword == password;
 }
 
 /*****************************************************************************/
@@ -232,7 +221,7 @@ module.exports = {
 	clearInRoom,
 	checkInRoom,
 	isPasswordNeeded,
-	verifyRoomPassword,
+	verifyPassword,
 
 	/* Functions for modding */
 	setMods,

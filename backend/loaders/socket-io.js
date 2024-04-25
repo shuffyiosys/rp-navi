@@ -22,7 +22,7 @@ const dmHandlers = require("../socket-io/dm-handlers");
 const userHandlers = require("../socket-io/user-socket");
 
 const userService = require("../services/redis/user-service");
-const characterService = require("../services/redis/character-service");
+const { getCharacters } = require("../services/mongodb/character-service");
 
 async function setupSocketSession(io, socket) {
 	const session = socket.request.session;
@@ -33,16 +33,12 @@ async function setupSocketSession(io, socket) {
 
 	const userId = session.userId;
 
-	let characterList = await characterService.getOwnedCharacters(userId);
-	if (characterList.length == 0) {
-		logger.debug(`Adding user's characters to cache`);
-		characterList = await characterService.addUserCharacters(userId);
-	}
+	let characterList = await getCharacters(userId);
 	socket.emit("character list", characterList);
 
 	userHandlers.setupSocket(io, socket);
 	dmHandlers.setupSocket(io, socket);
-	// chatHandlers.setupSocket(io, socket);
+	chatHandlers.setupSocket(io, socket);
 
 	socket.on("disconnect", () => {
 		logger.debug(`Socket ${socket.id} disconnected`);

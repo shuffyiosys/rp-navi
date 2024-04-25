@@ -1,12 +1,12 @@
 /**
  * Handles all Account based data manipulation and interfaces with the database.
  */
-const { PERMISSION_LEVELS } = require("../../data/account-data");
-const { logger, formatJson } = require("../../utils/logger");
-const { MODEL_NAMES } = require("../../models/model-names");
-const crypto = require("../../utils/crypto");
+const { PERMISSION_LEVELS } = require(`../../data/account-data`);
+const { logger, formatJson } = require(`../../utils/logger`);
+const { MODEL_NAMES } = require(`../../models/model-names`);
+const crypto = require(`../../utils/crypto`);
 
-const mongoose = require("mongoose");
+const mongoose = require(`mongoose`);
 const ObjectId = mongoose.Types.ObjectId;
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
@@ -65,9 +65,9 @@ async function authenticateUser(password, email = null, sessionToken = null) {
 	let accountData = null;
 	if (sessionToken) {
 		const docId = ObjectId(sessionToken);
-		accountData = await model.findOne({ _id: docId }, "_id email password");
+		accountData = await model.findOne({ _id: docId }, `_id email password`);
 	} else if (email) {
-		accountData = await model.findOne({ email: email }, "_id email password");
+		accountData = await model.findOne({ email: email }, `_id email password`);
 	}
 
 	if (accountData === null || accountData.permissions === PERMISSION_LEVELS.NEED_NEW_PASSWORD) {
@@ -147,7 +147,7 @@ async function deleteAccount(accountId) {
 }
 
 async function requireNewPassword(accountId = null, email = null) {
-	let identification = "";
+	let identification = ``;
 	if (accountId) {
 		identification = `${accountId}`;
 	} else if (email) {
