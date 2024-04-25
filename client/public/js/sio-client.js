@@ -1,4 +1,5 @@
 const socket = io();
+var characterList = [];
 
 /* Room functions */
 function getRooms() {
@@ -24,6 +25,7 @@ function createRoom(roomName, characterName, description = "", privateRoom = fal
 }
 
 function joinRoom(roomName, characterName, password = "") {
+	console.log(roomName, characterName);
 	let joinRoomData = {
 		roomName: roomName,
 		characterName: characterName,
@@ -31,14 +33,24 @@ function joinRoom(roomName, characterName, password = "") {
 	if (password) {
 		joinRoomData["password"] = password;
 	}
-	socket.emit("join room", joinRoomData);
+	socket.emit("join room", joinRoomData, (response) => {
+		const data = response.data;
+		addRoomTabEntry(data.characterName, data.roomName);
+	});
 }
 
 function leaveRoom(roomName, characterName) {
-	socket.emit("leave room", {
-		roomName: roomName,
-		characterName: characterName,
-	});
+	socket.emit(
+		"leave room",
+		{
+			roomName: roomName,
+			characterName: characterName,
+		},
+		(response) => {
+			const data = response.data;
+			removeRoomTabEntry(data.characterName, data.roomName);
+		}
+	);
 }
 
 function postChatMessage(roomName, characterName, message) {
@@ -103,7 +115,19 @@ function updateRoomSettings(roomName, modName, roomSettings) {
 	});
 }
 
-socket.on("room list", (resp) => console.log("Handling room list", resp));
+/* Room handlers */
+function populateRoomList(resp) {
+	$(`#room-list`).empty();
+	resp.forEach((roomName) => {
+		const roomNameId = roomName.replaceAll(" ", "-").toLowerCase() + "-room";
+
+		$(`#room-list`).append(
+			`<p data-roomname="${roomName}"><input id="${roomNameId}" type="radio"> <label for="${roomNameId}">${roomName}</label></p>`
+		);
+	});
+}
+
+socket.on("room list", populateRoomList);
 socket.on("room info", (resp) => console.log("Handling room info", resp));
 socket.on("room added", (resp) => console.log("Handling room added", resp));
 socket.on("room removed", (resp) => console.log("Handling room removed", resp));
@@ -227,7 +251,13 @@ socket.on("friend requested", (resp) => console.log("Handling friend request", r
 /* System events */
 socket.on("disconnect", (resp) => console.log("Handling disconnect", resp));
 socket.on("system message", (resp) => console.log("Handling system message", resp));
-socket.on("character list", (resp) => console.log("Handling character list", resp));
+socket.on("character list", (resp) => {
+	logMessage(resp);
+	characterList = [];
+	resp.forEach((data) => {
+		characterList.push(data.charaName);
+	});
+});
 
 socket.on("login error", (resp) => console.log("Handling login error", resp));
 

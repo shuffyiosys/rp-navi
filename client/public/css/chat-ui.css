@@ -1,0 +1,133 @@
+html,
+body {
+	height: 100%;
+	background-color: #f7eedd;
+}
+
+.main-container,
+.main-container > div {
+	min-width: 960px;
+	min-height: 540px;
+	height: 100%;
+}
+
+.left-sidebar,
+.right-sidebar {
+	background-color: #41c9e2;
+	height: 100vh;
+}
+
+/* Left side bar things*/
+.room-tabs {
+	height: calc(100% - 56px);
+	padding: calc(var(--bs-gutter-x) * 0.5);
+	overflow-y: scroll;
+}
+
+.character-tab {
+	background-color: #ace2e1;
+	padding: 8px;
+	margin-bottom: 8px;
+}
+
+.character-tab:hover {
+	background-color: #f7eedd;
+}
+
+.tab-selected {
+	background-color: #f7eedd;
+}
+
+.character-tab p {
+	margin: 0;
+}
+
+.character-tab p:first-child {
+	cursor: pointer;
+}
+
+.settings-header {
+	height: 56px;
+	background-color: #ace2e1;
+	background-color: #ace2e1;
+}
+
+.settings-header button {
+	margin-right: 8px;
+}
+
+/* Center content things */
+.main-page {
+	height: 100vh;
+}
+
+.page-header {
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+
+.page-header > div {
+	flex: 0 0 auto;
+}
+
+.room-name {
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+
+.chat-page {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 48px);
+}
+
+.message-section {
+	width: 100%;
+	height: calc(100% - 10px);
+
+	overflow-y: scroll;
+
+	background-color: #41c9e2;
+}
+
+.message-list {
+	padding: 10px;
+	width: 100%;
+}
+
+.chat-message {
+	background-color: #ace2e1;
+	padding: 8px;
+	border-radius: 8px;
+	margin-bottom: 8px;
+}
+
+.input-section {
+	padding: 10px 0 10px 10px;
+	width: 100%;
+	background-color: #ace2e1;
+}
+
+.input-section > textarea {
+	width: calc(100% - 10px);
+	resize: none;
+}
+
+.room-page {
+	display: none;
+}
+
+/* Right sidebar things */
+.room-user-list {
+	height: 100vh;
+	padding-top: calc(var(--bs-gutter-x) * 0.5);
+	padding-bottom: calc(var(--bs-gutter-x) * 0.5);
+	overflow-y: auto;
+}
+
+.right-bar-entry {
+	background-color: #ace2e1;
+	padding: 8px;
+	border-radius: 8px;
+	margin-bottom: 8px;
+}

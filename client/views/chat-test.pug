@@ -8,8 +8,8 @@ html
 		script(src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous") 
 		script(src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous")
 		script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous" defer)
-		
 		script(src="./js/chat.js" defer)
+
 		script(src="./js/sio-client.js" defer)
 	body 
 		div.main-container.container-fluid
@@ -21,42 +21,105 @@ html
 						button.btn.btn-primary.btn-sm(type="button" data-bs-toggle="modal" data-bs-target="#settings-modal" title="Settings")
 							i.bi.bi-gear-fill
 
-					div.room-tabs(style="padding-left: 0; padding-right: 0;")
-						div#friends-tab.character-tab.tab-selected
-							p Direct Messages
+					div.room-tabs
+						div.character-tab(data-character="Character 1")
+							p.header Character 1
+							p(data-room="room-1") This is a room 
+							p(data-room="room-2") This is anothe room
+						div.character-tab(data-character="Character 2")
+							p.header Character 2
+							p This is a room 
+							p This is anothe room
+						div.character-tab(data-character="Character 3")
+							p.header Character 3
+							p This is a room 
+							p This is anothe room
+						div.character-tab
+							p.header Character 4
+							p This is a room 
+							p This is anothe room
+						div.character-tab
+							p.header Character 5
+							p This is a room 
+							p This is anothe room
+						div.character-tab
+							p.header Character 5
+							p This is a room 
+							p This is anothe room
+						div.character-tab
+							p.header Character 5
+							p This is a room 
+							p This is anothe room
+						div.character-tab
+							p.header Character 5
+							p This is a room 
+							p This is anothe room	
+						div.character-tab
+							p.header Character 5
+							p This is a room 
+							p This is anothe room
 				div.main-page.col-8
 					div.container-fluid.page-header(style="padding-left: 0; padding-right: 0;")
 						div.row
 							div(style="flex: 0 0 230px;")
-								span.room-name 
+								span.room-name This is some room 
 							div.col
-								span.room-topic 
+								span.room-topic This is some topic
 							div(style="text-align: right; flex: 0 0 230px;")
 								button.btn.btn-secondary.btn-sm.user-list-toggle
 									i.bi.bi-people-fill
 					div.chat-page
 						div.message-section
 							div.message-list
+								div.chat-message 
+									p If you're blue, and you don't know where to go to
+									p Why don't you go where fashion sits?
+									p Puttin' on the Ritz
+									p Different types who wear a day coat
+									p Pants with stripes and cutaway coat, perfect fits
+									p Puttin' on the Ritz
+								div.chat-message 
+									p Dressed up like a million-dollar trouper
+									p Trying hard to look like Gary Cooper (super duper)
+									p If you're blue, and you don't know where to go to
+									p Why don't you go where fashion sits?
+									p Puttin' on the Ritz
 						div.input-section
 							textarea(rows=2)
-				div.right-sidebar.col-2(style="padding-left: 0; padding-right: 0;")
+				div.right-sidebar.col-2
 					div.right-bar-entry.input-group.flex-nowrap 
 						input.form-control(type="text" placeholder="Search for user" aria-label="user-search" aria-describedby="addon-wrapping")
 					div.room-user-list
-
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
+						div.right-bar-entry Character 1
 		div.footer
 	div#room-list-modal.modal.fade(tabindex="-1" aria-labelledby="room-list-modal-label" aria-hidden="true")
 		div.modal-dialog.modal-lg
 			div.modal-content
 				div.modal-header
-					h5#room-list-modal-label.modal-title Chat rooms
+					h5#room-list-modal-label.modal-title Chat room
 					button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
 				div.modal-body
-					div#room-list
-					div#create-room-form
-						input#create-room-name(type=text)
+					p Someone probably has something interesting here 
+					p Same here
+					input(type="checkbox")
 				div.modal-footer
-					button#join-room-btn.btn.btn-primary(type="button" data-bs-dismiss="modal") Join
 					button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Close
 	div#lfrp-modal.modal.fade(tabindex="-1" aria-labelledby="lfrp-modal-label" aria-hidden="true")
 		div.modal-dialog.modal-lg
@@ -78,7 +141,7 @@ html
 					button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
 				div.modal-body
 					p This is some settings page 
-					p Here are some settings 
+					p HEre are some settings 
 					input(type="checkbox")
 				div.modal-footer
 					button#clearOpsDataBtn.btn.btn-primary(type="button" data-bs-dismiss="modal") Save
