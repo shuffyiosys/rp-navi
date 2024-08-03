@@ -1,113 +1,100 @@
-$("#signupSubmit").click(() => {
-	const data = { email: $("#emailInput").val(), password: $("#passwordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/create",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+function sendAjaxPost(data, url, callback = updateStatus) {
+	let postData = JSON.stringify(data);
+	let xhr = new XMLHttpRequest();
 
-$("#loginSubmit").click(() => {
-	const data = { email: $("#emailInput").val(), password: $("#passwordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/login",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+	xhr.onload = function () {
+		if (xhr.status == 200) {
+			callback(JSON.parse(this.response));
+		}
+	};
 
-$("#forgotPassword").click(() => {
-	const data = { email: $("#emailInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/forgotPassword",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+	xhr.send(postData);
+}
 
-$("#resetPasswordBtn").click(() => {
-	const data = { newPassword: $("#resetPasswordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: `/account/resetPassword?token=${$("#resetTokenInput").val()}`,
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+function sendAjaxGet(url, callback = updateStatus) {
+	let xhr = new XMLHttpRequest();
 
-$("#logOutBtn").click(() => {
-	const data = {};
-	$.ajax({
-		type: "POST",
-		url: "/account/logout",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+	xhr.open("GET", url, true);
+	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
+	xhr.onload = function () {
+		if (xhr.status == 200) {
+			callback(JSON.parse(this.response));
+		}
+	};
 
-$("#getData").click(() => {
-	const data = {};
-	$.ajax({
-		type: "GET",
-		url: "/account/data",
-		data: data,
-		success: updateStatus,
-	});
-});
+	xhr.send();
+}
 
-$("#getVerification").click(() => {
-	const data = {};
-	$.ajax({
-		type: "GET",
-		url: "/account/resendVerify",
-		data: data,
-		success: updateStatus,
-	});
-});
+function getInputValue(query) {
+	return document.querySelector(query).value;
+}
 
-$("#updateEmail").click(() => {
-	const data = { newEmail: $("#newEmailInput").val(), password: $("#passwordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/update-email",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+document.getElementById("loginSubmit").onclick = () => {
+	const data = {
+		email: getInputValue("#emailInput"),
+		password: getInputValue("#passwordInput"),
+	};
+	sendAjaxPost(data, "/account/login");
+};
 
-$("#updatepasswordBtn").click(() => {
-	const data = { newPassword: $("#newPasswordInput").val(), password: $("#passwordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/update-password",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+document.getElementById("signupSubmit").onclick = () => {
+	const data = {
+		email: getInputValue("#emailInput"),
+		password: getInputValue("#passwordInput"),
+	};
+	sendAjaxPost(data, "/account/create");
+};
 
-$("#deleteAccountBtn").click(() => {
-	const data = { password: $("#passwordInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/account/delete",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+document.getElementById("forgotPassword").onclick = () => {
+	const data = {
+		email: getInputValue("#emailInput"),
+	};
+	sendAjaxPost(data, "/account/forgotPassword");
+};
 
-$("#getCharactersBtn").click(() => {
-	$(`#characterList`).empty();
+document.getElementById("forgotPassword").onclick = () => {
+	const data = { newPassword: getInputValue("#resetPasswordInput") };
+	const tokenInput = getInputValue("#resetTokenInput");
+	sendAjaxPost(data, `/account/resetPassword?token=${tokenInput}`);
+};
+
+document.getElementById("logOutBtn").onclick = () => {
+	sendAjaxPost({}, `/account/logout`);
+};
+
+document.getElementById("getData").onclick = () => {
+	sendAjaxGet(`/account/data`);
+};
+
+document.getElementById("getVerification").onclick = () => {
+	sendAjaxGet(`/account/resendVerify`);
+};
+
+document.getElementById("updateEmail").onclick = () => {
+	const data = {
+		newEmail: getInputValue("#newEmailInput"),
+		password: getInputValue("#passwordInput"),
+	};
+	sendAjaxPost(data, `/account/resupdate-emailendVerify`);
+};
+
+document.getElementById("updatepasswordBtn").onclick = () => {
+	const data = {
+		newEmail: getInputValue("#newPasswordInput"),
+		password: getInputValue("#passwordInput"),
+	};
+	sendAjaxPost(data, `/account/resupdate-password`);
+};
+
+document.getElementById("deleteAccountBtn").onclick = () => {
+	const data = { password: getInputValue("#passwordInput") };
+	sendAjaxPost(data, `/account/delete`);
+};
+
+document.getElementById("getCharactersBtn").onclick = () => {
+	document.getElementById("characterList").replaceChildren();
 	const characterRow = `
 	<div class="flex-container">
 		<div class="flex-items">
@@ -117,47 +104,51 @@ $("#getCharactersBtn").click(() => {
 			<p>Actions</p>
 		</div>
 	</div>`;
+	document.getElementById("characterList").insertAdjacentHTML("beforeend", characterRow);
+	sendAjaxGet(`/character/list`, updateCharacterList);
+};
 
-	$("#characterList").append(characterRow);
-	$.ajax({
-		type: "GET",
-		url: "/character/list",
-		data: {},
-		success: updateCharacterList,
-		dataType: "json",
-	});
-});
-
-$("#newCharacter").click(() => {
-	const data = { charaName: $("#newCharacterInput").val() };
-	$.ajax({
-		type: "POST",
-		url: "/character/create",
-		data: data,
-		success: updateStatus,
-		dataType: "json",
-	});
-});
+document.getElementById("newCharacter").onclick = () => {
+	const data = { password: getInputValue("#newCharacterInput") };
+	sendAjaxPost(data, `/character/create`);
+};
 
 function updateStatus(response) {
-	$("#statusMessage").empty();
-	console.log("Response data:", response);
+	let statusMessage = document.getElementById("statusMessage");
+	statusMessage.replaceChildren();
+
+	const respType = document.createElement("li");
+	const respMsg = document.createElement("li");
+	const respDataHeader = document.createElement("li");
+	const respData = document.createElement("ul");
+
+	respType.append(`Type: ${response.type}`);
+	respMsg.append(`Message: ${response.msg || "[No message]"}`);
+	respDataHeader.append("Response data");
+
+	console.log(response);
+
 	if (Array.isArray(response.data)) {
 		response.data.forEach((element) => {
-			$("#statusMessage").append(`<li>${JSON.stringify(element)}</li>`);
+			let listItem = document.createElement("li");
+			listItem.append(`${JSON.stringify(element)}`);
+			respData.append(listItem);
 		});
 	} else {
-		$("#statusMessage").append(`<li>${response.type}</li>`);
-		$("#statusMessage").append(`<li>${response.msg}</li>`);
-		$("#statusMessage").append(`<li>Data:<ul id="respDataList">`);
 		for (const item in response.data) {
-			$("#respDataList").append(`<li>${item}: ${response.data[item]}</li>`);
+			let listItem = document.createElement("li");
+			listItem.append(`${item}: ${response.data[item]}`);
+			respData.append(listItem);
 		}
-		$("#statusMessage").append(`</ul></li>`);
 	}
+	statusMessage.appendChild(respType);
+	statusMessage.appendChild(respMsg);
+	statusMessage.appendChild(respDataHeader);
+	statusMessage.appendChild(respData);
 }
 
 function updateCharacterList(response) {
+	console.log(response);
 	response.data.forEach((element) => {
 		const characterRow = `
 			<div class="flex-container">
@@ -165,20 +156,15 @@ function updateCharacterList(response) {
 					<p>${element.charaName}</p>
 				</div>
 				<div class="flex-items">
-					<p><button id="delete${element.charaName}">Delete</button></p>
+					<p><button id="delete-${element.charaName}">Delete</button></p>
+					<p><a href="/character/edit?character=${element.charaName}">Edit</a></p>
 				</div>
 			</div>`;
 
-		$("#characterList").append(characterRow);
-		$(`#delete${element.charaName}`).click(() => {
-			$.ajax({
-				type: "POST",
-				url: "/character/delete",
-				data: { charaName: element.charaName },
-				success: updateStatus,
-				dataType: "json",
-			});
-		});
+		document.querySelector("#characterList").insertAdjacentHTML("beforeend", characterRow);
+		document.querySelector(`#delete-${element.charaName}`).onclick = () => {
+			sendAjaxPost({ charaName: element.charaName }, "/character/delete");
+		};
 	});
 	updateStatus(response);
 }

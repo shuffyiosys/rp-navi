@@ -13,17 +13,27 @@ router.get("/", (req, res) => {
 	res.render("index", pageData);
 });
 
-router.get("/test", (req, res) => {
-	const pageData = new PageRenderParams("Test", req.session, res.locals);
-	res.render("test", pageData);
-});
-
 router.get("/chat", (req, res) => {
 	const pageData = new PageRenderParams("RP Navi Chat", req.session, res.locals);
 	res.render("chat", pageData);
 });
 
 router.get("/favicon.ico", (req, res) => res.status(204));
+
+router.get("/test", (req, res) => {
+	const pageData = new PageRenderParams("Test", req.session, res.locals);
+	res.render("test", pageData);
+});
+
+router.get("/ui-demo", (req, res) => {
+	const pageData = new PageRenderParams("UI Demo", req.session, res.locals);
+	res.render("ui-components", pageData);
+});
+
+router.post("/editor-submit", (req, res) => {
+	console.log("Editor submission:", req.body);
+	res.status(200);
+});
 
 module.exports = {
 	router,

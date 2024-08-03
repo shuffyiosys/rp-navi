@@ -9,23 +9,21 @@ const { AjaxResponse } = require("../classes/ajax-response");
 /**
  * @brief Checks for commonly expected errors
  * @param {object} req - Request data from client
- * @param {object} res - Response object to client
- * @returns True if there are errors, false otherwise
+ * @returns If there are errors, then return the AJAX response. Otherwise return null.
  *
  * The expected errors are:
  * - If the request validator has errors
  * - If the request object doesn't have a session
  */
-function verifyNoReqErrors(req, res) {
+function verifyNoReqErrors(req) {
 	const errors = validationResult(req);
+	let response = null;
 	if (errors.isEmpty() === false) {
-		res.json(new AjaxResponse("error", "Errors with input", { errors: errors.array() }));
-		return true;
+		response = new AjaxResponse("error", "Errors with input", errors.array());
 	} else if ("userId" in req.session === false) {
-		res.json(new AjaxResponse("error", "Not logged in", {}));
-		return true;
+		response = new AjaxResponse("error", "Not logged in", {});
 	}
-	return false;
+	return response;
 }
 
 module.exports = {

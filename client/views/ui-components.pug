@@ -1,0 +1,38 @@
+doctype html
+html 
+	head
+		title="UI Components Demo"
+		link(rel="stylesheet", href="./css/common.css")
+		link(rel="stylesheet", href="./css/editor.css")
+
+		script(src="./js/tinymce/tinymce.min.js" referrerpolicy="origin")
+		script(src="./js/editor.js" referrerpolicy="origin")
+	body 
+		button Plain
+		button.btn Normal
+		| 
+		button.btn.btn-primary Primary
+		| 
+		button.btn.btn-secondary secondary
+		| 
+		button.btn.btn-success success
+		| 
+		button.btn.btn-danger danger
+		| 
+		button.btn.btn-warn warn
+		| 
+		button.btn.btn-info info
+
+		div.card(style="width: 1280px; height: auto;")
+			button#reload-editor-btn.btn.btn-primary Reload
+			h1 TinyMCE Quick Start Guide 
+
+			p JavaScript
+			textarea#editor-js(name="editor-css" rows=5) 
+
+			p CSS
+			textarea#editor-css(name="editor-css" rows=5) 
+
+			textarea#editor
+			button#submit-editor-btn.btn.btn-primary Submit
+			input(type="hidden" id="question_html" name="question_html")

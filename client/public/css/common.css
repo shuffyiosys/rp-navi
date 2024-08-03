@@ -1,0 +1,104 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap");
+
+:root {
+	--color-dark: #2d3236;
+	--color-light: #eee;
+	--color-link: #5f90d8;
+
+	--color-primary: #0d6efd;
+	--color-primary-selected: #0b56bf;
+	--color-secondary: #6c757d;
+	--color-secondary-selected: #636b72;
+	--color-success: #198754;
+	--color-success-selected: #16774a;
+	--color-danger: #dc3545;
+	--color-danger-selected: #cc3342;
+	--color-warn: #ffc107;
+	--color-warn-selected: #e5ad06;
+	--color-info: #0dcaf0;
+	--color-info-selected: #0db6d8;
+}
+
+.btn {
+	font-family: "Roboto";
+	padding: 0.5rem 0.6rem 0.5rem 0.6rem;
+	margin: 0.2rem;
+
+	border-radius: 0.5rem;
+	border: none;
+
+	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
+	transition: background-color 0.2s ease-out, box-shadow 0.1s ease-out;
+
+	background-color: var(--color-light);
+	color: var(--color-dark);
+
+	cursor: pointer;
+}
+
+.btn:active {
+	box-shadow: none;
+}
+
+.btn-primary {
+	background-color: var(--color-primary);
+	color: var(--color-light);
+}
+
+.btn-primary:hover {
+	background-color: var(--color-primary-selected);
+}
+
+.btn-secondary {
+	background-color: var(--color-secondary);
+	color: var(--color-light);
+}
+
+.btn-secondary:hover {
+	background-color: var(--color-secondary-selected);
+}
+
+.btn-success {
+	background-color: var(--color-success);
+	color: var(--color-light);
+}
+
+.btn-success:hover {
+	background-color: var(--color-success-selected);
+}
+
+.btn-danger {
+	background-color: var(--color-danger);
+	color: var(--color-light);
+}
+
+.btn-danger:hover {
+	background-color: var(--color-danger-selected);
+}
+
+.btn-warn {
+	background-color: var(--color-warn);
+	color: var(--color-dark);
+}
+
+.btn-warn:hover {
+	background-color: var(--color-warn-selected);
+}
+
+.btn-info {
+	background-color: var(--color-info);
+	color: var(--color-dark);
+}
+
+.btn-info:hover {
+	background-color: var(--color-info-selected);
+}
+
+div.card {
+	font-family: "Roboto";
+	padding: 0.5rem 0.6rem 0.5rem 0.6rem;
+	margin: 0.2rem;
+
+	border-radius: 0.5rem;
+	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
+}

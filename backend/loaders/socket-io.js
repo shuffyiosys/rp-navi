@@ -22,7 +22,7 @@ const dmHandlers = require("../socket-io/dm-handlers");
 const userHandlers = require("../socket-io/user-socket");
 
 const userService = require("../services/redis/user-service");
-const { getCharacters } = require("../services/mongodb/character-service");
+const { getCharacterList } = require("../services/mongodb/character-service");
 
 async function setupSocketSession(io, socket) {
 	const session = socket.request.session;
@@ -33,7 +33,7 @@ async function setupSocketSession(io, socket) {
 
 	const userId = session.userId;
 
-	let characterList = await getCharacters(userId);
+	let characterList = await getCharacterList(userId);
 	socket.emit("character list", characterList);
 
 	userHandlers.setupSocket(io, socket);

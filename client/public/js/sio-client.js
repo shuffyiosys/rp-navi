@@ -254,8 +254,12 @@ socket.on("system message", (resp) => console.log("Handling system message", res
 socket.on("character list", (resp) => {
 	logMessage(resp);
 	characterList = [];
+	resp = resp.sort();
 	resp.forEach((data) => {
-		characterList.push(data.charaName);
+		const name = data.charaName;
+		characterList.push(name);
+		let nameSelectHtml = `<p><input type="radio" id="${name}-room-select" value="${name}" name="room-character-radio"></input> <label for="${name}-room-select">${name}</label></p>`;
+		$(`div#join-character-list`).append(nameSelectHtml);
 	});
 });
 

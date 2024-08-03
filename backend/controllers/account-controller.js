@@ -113,6 +113,7 @@ async function logoutAccount(req, res) {
  * @param {*} res
  */
 async function loginAccount(req, res) {
+	console.log(req.body);
 	const errors = validationResult(req);
 	if (errors.isEmpty() === false) {
 		res.json(errors.array());
@@ -139,7 +140,9 @@ async function loginAccount(req, res) {
  */
 async function updateEmail(req, res) {
 	const body = req.body;
-	if (verifyNoReqErrors(req, res) === true) {
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
 	} else if (await accountService.accountExists(body.newEmail)) {
 		res.json({
@@ -150,9 +153,7 @@ async function updateEmail(req, res) {
 		return;
 	}
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse(`info`, `Email not updated`, {
-		modifiedCount: 0,
-	});
+	response = new AjaxResponse(`info`, `Email not updated`, { modifiedCount: 0 });
 	if (accountData) {
 		const updateData = await accountService.updateEmail(req.session.userId, body.newEmail);
 		response.data = updateData;
@@ -170,13 +171,15 @@ async function updateEmail(req, res) {
  * @param {*} res
  */
 async function updatePassword(req, res) {
-	if (verifyNoReqErrors(req, res) === true) {
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
 	}
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse(`info`, `Password not updated`, { modifiedCount: 0 });
+	response = new AjaxResponse(`info`, `Password not updated`, { modifiedCount: 0 });
 	if (accountData !== null) {
 		const updateData = await accountService.updatePassword(req.session.userId, body.newPassword);
 		response.data = updateData;
@@ -188,15 +191,16 @@ async function updatePassword(req, res) {
 }
 
 async function requestPasswordReset(req, res) {
-	const errors = validationResult(req);
-	let response = new AjaxResponse(
-		`info`,
-		`If the email address is registered, a password reset mail will be sent to it`,
-		{}
-	);
-	if (errors.isEmpty() === false) {
-		res.json(errors.array());
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
+	} else {
+		response = new AjaxResponse(
+			`info`,
+			`If the email address is registered, a password reset mail will be sent to it`,
+			{}
+		);
 	}
 
 	const body = req.body;
@@ -239,9 +243,9 @@ async function verifyPasswordReset(req, res) {
 }
 
 async function updatePasswordReset(req, res) {
-	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
-		res.json(errors.array());
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
 	}
 
@@ -253,7 +257,7 @@ async function updatePasswordReset(req, res) {
 	}
 	await verifyService.deleteToken(req.query.token);
 	const accountData = await accountService.getAccountData(resetToken.referenceId);
-	let response = new AjaxResponse(`error`, `Error with handling password reset`, {});
+	response = new AjaxResponse(`error`, `Error with handling password reset`, {});
 	if (accountData) {
 		const updateData = await accountService.updatePassword(resetToken.referenceId, req.body.newPassword);
 		response.type = `info`;
@@ -274,11 +278,13 @@ async function updatePasswordReset(req, res) {
  * @returns
  */
 async function verifyAccount(req, res) {
-	if (verifyNoReqErrors(req, res) === true) {
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
 	}
 
-	let response = new AjaxResponse(`error`, `Could not verify email`, { verified: false });
+	response = new AjaxResponse(`error`, `Could not verify email`, { verified: false });
 	const emailedVerified = await verifyService.verifyRequest(
 		req.query.token,
 		VERIFY_ACTION.VERIFY_EMAIL,
@@ -292,12 +298,14 @@ async function verifyAccount(req, res) {
 }
 
 async function resendVerification(req, res) {
-	if (verifyNoReqErrors(req, res) === true) {
+	let response = verifyNoReqErrors(req, res);
+	if (response !== null) {
+		res.json(response);
 		return;
 	}
 	await verifyService.deleteToken(undefined, VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
 	const newTokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
-	let response = new AjaxResponse(`Error`, `No verification token found`, {});
+	response = new AjaxResponse(`Error`, `No verification token found`, {});
 	if (newTokenData) {
 		response = new AjaxResponse(
 			`info`,

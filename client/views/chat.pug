@@ -45,6 +45,8 @@ html
 					div.room-user-list
 
 		div.footer
+	
+	// Room list modal
 	div#room-list-modal.modal.fade(tabindex="-1" aria-labelledby="room-list-modal-label" aria-hidden="true")
 		div.modal-dialog.modal-lg
 			div.modal-content
@@ -52,12 +54,16 @@ html
 					h5#room-list-modal-label.modal-title Chat rooms
 					button.btn-close(type="button" data-bs-dismiss="modal" aria-label="Close")
 				div.modal-body
-					div#room-list
+					div(style="display:flex; flex-direction: row;")
+						div#room-list(style="width: 50%;")
+						div#join-character-list(style="width: 50%;")
 					div#create-room-form
 						input#create-room-name(type=text)
 				div.modal-footer
 					button#join-room-btn.btn.btn-primary(type="button" data-bs-dismiss="modal") Join
 					button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Close
+
+	// LFRP modal
 	div#lfrp-modal.modal.fade(tabindex="-1" aria-labelledby="lfrp-modal-label" aria-hidden="true")
 		div.modal-dialog.modal-lg
 			div.modal-content
@@ -69,7 +75,9 @@ html
 					p Same here
 					input(type="checkbox")
 				div.modal-footer
-					button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Close
+					button.btn.btn-secondary(type="button") Close
+
+	// Settings modal
 	div#settings-modal.modal.fade(tabindex="-1" aria-labelledby="settings-modal-label" aria-hidden="true")
 		div.modal-dialog.modal-lg
 			div.modal-content

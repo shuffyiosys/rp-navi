@@ -7,6 +7,7 @@ const { MODEL_NAMES } = require(`../../models/model-names`);
 const crypto = require(`../../utils/crypto`);
 
 const mongoose = require(`mongoose`);
+const { format } = require("winston");
 const ObjectId = mongoose.Types.ObjectId;
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
 
@@ -21,10 +22,17 @@ async function createAccount(email, password) {
 	const hash = await crypto.getPasswordHash(password, salt);
 
 	logger.info(`${email} is attempting to create an account`);
-	const accountData = await model.create({
-		email: email,
-		password: hash,
-	});
+	let accountData = null;
+
+	try {
+		accountData = await model.create({
+			email: email,
+			password: hash,
+		});
+	} catch (error) {
+		logger.warn(`Error in [createAccount] ${formatJson(error)}`);
+	}
+
 	return accountData;
 }
 

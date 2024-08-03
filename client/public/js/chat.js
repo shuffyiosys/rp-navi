@@ -74,10 +74,13 @@ function toggleUserList() {
 }
 
 /* Specific UI handlers */
-function handleJoinRoom(event) {
+function handleJoinRoom() {
 	const roomDom = $(`#room-list input[type=radio]:checked`).parent();
 	const roomName = roomDom[0].dataset[`roomname`];
-	joinRoom(roomName, characterList[0]);
+	const characterName = $(`#join-character-list input[type=radio]:checked`).val();
+	joinRoom(roomName, characterName);
+
+	$(`#lfrp-modal`).modal("hide");
 }
 
 function handleCreateRoom(event) {}

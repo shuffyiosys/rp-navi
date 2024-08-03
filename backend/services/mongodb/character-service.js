@@ -6,15 +6,21 @@ const { logger, formatJson } = require("../../utils/logger");
 const model = mongoose.model(MODEL_NAMES.CHARACTER);
 
 async function createCharacter(characterName, accountId) {
-	const ownerId = ObjectId(accountId);
-	logger.info(`${accountId} is attempting to create a character ${characterName}`);
-	const characterData = await model.create({
-		charaName: characterName,
-		owner: ownerId,
-		profileHtml: "",
-		profileCss: "",
-		profileJs: "",
-	});
+	let characterData = null;
+	try {
+		const ownerId = ObjectId(accountId);
+		logger.info(`${accountId} is attempting to create a character ${characterName}`);
+		characterData = await model.create({
+			charaName: characterName,
+			owner: ownerId,
+			profileHtml: "",
+			profileCss: "",
+			profileJs: "",
+		});
+	} catch (error) {
+		logger.warn(`Error in [createCharacter] ${formatJson(error)}`);
+	}
+
 	return characterData;
 }
 
@@ -22,7 +28,7 @@ async function getCharacterExists(characterName) {
 	return await model.exists({ charaName: characterName });
 }
 
-async function getCharacters(accountId) {
+async function getCharacterList(accountId) {
 	const ownerId = ObjectId(accountId);
 	return model.find({ owner: ownerId }, "charaName");
 }
@@ -63,7 +69,7 @@ async function deleteCharacter(characterName, accountId) {
 module.exports = {
 	createCharacter,
 	getCharacterExists,
-	getCharacters,
+	getCharacterList,
 	getCharacterCount,
 	getCharacterProfile,
 	getCharacterData,

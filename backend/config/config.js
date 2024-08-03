@@ -35,7 +35,7 @@ function getConfig(fileName = ".env") {
 		},
 		rateLimiter: {
 			limitMs: process.env.RATE_LIMIT_MS || 10 * 60 * 1000,
-			maxReq: process.env.RATE_MAX_REQS || 100,
+			maxReq: process.env.RATE_MAX_REQS || 100000,
 			timeoutMs: process.env.POST_WINDOW_TIMEOUT || 15 * 60 * 1000,
 			delayAfter: process.env.POST_DELAY_AFTER || 5,
 			delayMs: process.env.POST_DELAY_MS || 250,
