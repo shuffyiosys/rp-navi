@@ -8,27 +8,28 @@ body {
 
 .main-card {
 	margin: auto;
-	width: 60vw;
-	max-width: 1280px;
 	padding: 2.5rem;
+
+	width: 70vw;
+	max-width: 1280px;
+	height: 70vh;
 	min-height: 400px;
+
 	background-color: #fff;
 
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 	gap: 1.5rem;
 }
 
-.main-card > div {
-	width: 50%;
+.flex-container {
+	display: flex;
+	flex-direction: row;
+
+	gap: 1.5rem;
 }
 
-#login-btn {
-	margin-left: 2rem;
-	width: 20%;
-}
-
-.form-style > label {
-	display: block;
-	margin-bottom: 0.5rem;
+.flex-item {
+	margin: 0.5rem;
+	flex: 1 1 auto;
 }

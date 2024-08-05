@@ -1,0 +1,36 @@
+doctype html
+html 
+	head
+		title="Advanced profile editor"
+		link(rel="stylesheet", href="/css/common.css")
+		link(rel="stylesheet", href="/css/editor.css")
+		script(src="/js/utilities.js" referrerpolicy="origin")
+		script(src="/js/editor-advanced.js" referrerpolicy="origin")
+	body 
+		div.header
+			h2 Editing character: #{data.name}
+		div.source-container
+			div.source-item
+				p
+					strong HTML
+				textarea#editor-html(name="html-source" rows=10)
+
+			div.source-item
+				p
+					strong CSS
+				textarea#editor-css(name="css-source" rows=10)
+
+			div.source-item
+				p
+					strong JavaScript
+				textarea#editor-js(name="js-source" rows=10)
+				input#include-jquery-checkbox(type="checkbox", name="include-jquery")
+				label(for="include-jquery") Include jQuery
+		div.output
+			iframe#preview-iframe
+		div.card.bottom
+			div
+				a(href="/character/editor?character=" + data.name) Basic editor
+			div(style="text-align: right;")
+				button#refresh-button.btn Refresh Preview
+				button#submit-btn.btn.btn-primary Submit

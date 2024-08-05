@@ -11,16 +11,16 @@ async function createCharacter(req, res) {
 		res.json(response);
 		return;
 	} else if (await characterService.getCharacterExists(body.characterName)) {
-		response = new AjaxResponse("error", "A character with this name exists", {});
+		response = new AjaxResponse("error", "A character with this name exists", { success: false });
 		res.json(response);
 		return;
 	}
 
 	const characterData = await characterService.createCharacter(body.characterName, req.session.userId);
 	if (characterData !== null) {
-		response = new AjaxResponse("info", "Character created", characterData);
+		response = new AjaxResponse("info", "", { success: true });
 	} else {
-		response = new AjaxResponse("error", "Error creating the character", {});
+		response = new AjaxResponse("error", "Error creating the character", { success: true });
 	}
 	res.json(response);
 }
@@ -44,12 +44,29 @@ async function getCharacterProfile(req, res) {
 	}
 	const characterName = req.query.name;
 	const characterData = await characterService.getCharacterProfile(characterName);
+	const pageData = new PageRenderParams(
+		`${characterName}'s profile`,
+		{ name: characterName, noCharacter: false },
+		res.locals
+	);
+
 	if (characterData === null) {
-		response = new AjaxResponse("info", "A character with this name does not exist", null);
-	} else {
-		response = new AjaxResponse("info", "", characterData);
+		pageData.title = "No character";
+		pageData.data.noCharacter = true;
 	}
-	res.json(response);
+	res.render("character/profile", pageData);
+}
+
+async function getProfileData(req, res) {
+	const characterName = req.query.name;
+	const characterData = await characterService.getCharacterProfile(characterName);
+	if (characterData === null) {
+		response = new AjaxResponse("error", `${characterName} does not exist`, {});
+		res.json(response);
+	} else {
+		response = new AjaxResponse(`info`, "", characterData);
+		res.json(response);
+	}
 }
 
 async function getProfileEditor(req, res) {
@@ -69,9 +86,19 @@ async function getProfileEditor(req, res) {
 		response = new AjaxResponse("error", "Account does not own character", {});
 		res.json(response);
 	} else {
-		res.locals.charactId = characterData._id;
-		const pageData = new PageRenderParams("Character Profile Editor", req.session, res.locals);
-		res.render("edit-character", pageData);
+		const data = {
+			name: characterData.characterName,
+			html: characterData.profileHtml,
+			css: characterData.profileCss,
+			js: characterData.profileJs,
+		};
+		const pageData = new PageRenderParams("Character Profile Editor", data, res.locals);
+
+		if (req.route.path == "/editor-advanced") {
+			res.render("character/editor-advanced", pageData);
+		} else {
+			res.render("character/editor-basic", pageData);
+		}
 	}
 }
 
@@ -88,21 +115,26 @@ async function updateProfile(req, res) {
 		return;
 	}
 
-	const characterName = body.characterName;
+	const characterName = body.name;
 	const userId = session.userId;
 	const profileData = {
-		profileHtml: body.html,
-		profileCss: body.css,
-		profileJs: body.js,
+		profileHtml: body.html || "",
+		profileCss: body.css || "",
+		profileJs: body.js || "",
+		includeJquery: body.includeJquery || false,
 	};
 
 	const updateData = await characterService.updateProfile(characterName, userId, profileData);
-	response = new AjaxResponse("info", "Update status", updateData);
-	res.json(response);
+	if (updateData) {
+		response = new AjaxResponse("info", "", { success: true });
+		res.json(response);
+	} else {
+		response = new AjaxResponse("error", "", { success: false });
+	}
 }
 
 async function deleteCharacter(req, res) {
-	const characterName = req.body.characterName;
+	const characterName = req.body.name;
 	const userId = req.session.userId;
 	let response = verifyNoReqErrors(req, res);
 	if (response !== null) {
@@ -117,7 +149,8 @@ async function deleteCharacter(req, res) {
 		return;
 	}
 
-	const updateData = await characterService.deleteCharacter(characterName, userId);
+	let updateData = await characterService.deleteCharacter(characterName, userId);
+	updateData.characterName = characterName;
 	response = new AjaxResponse("info", "Deletion status", updateData);
 	res.json(response);
 }
@@ -126,6 +159,7 @@ module.exports = {
 	createCharacter,
 	getCharacterList,
 	getCharacterProfile,
+	getProfileData,
 	getProfileEditor,
 	updateProfile,
 	deleteCharacter,

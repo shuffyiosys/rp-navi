@@ -1,0 +1,35 @@
+doctype html
+html 
+	head
+		title=title
+		link(rel="stylesheet", href="/css/common.css")
+		link(rel="stylesheet", href="/css/account-index.css")
+
+		script(src="/js/utilities.js")
+		script(src="/js/account-index.js" defer)
+	body 
+	
+		div.card.main-card
+			div.form-style
+				h2(style="margin-bottom: 2rem;") Account information
+				p Email: #{data.email}
+				br
+				p Update email:
+				input#email-input(type="email" name="email-input")
+				p#email-error.error-label
+				
+				p Update password
+				input#new-password-input(type="password" name="new-password-input")
+				p#password-error.error-label
+				
+				p Current password
+				input#password-input(type="password" name="new-password-input")
+				p#password-error.error-label
+				br
+				p#error-message.error-label
+			div
+				h2 Characters
+				input#new-character-input(type="text") 
+				button#create-character-btn.btn.btn-primary Create character
+				p#create-character-msg 
+				div#character-list

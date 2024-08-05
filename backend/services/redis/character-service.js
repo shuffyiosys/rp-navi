@@ -5,11 +5,11 @@ const { getCharacterList, getCharacterCount } = require("../mongodb/character-se
 async function addUserCharacters(userId) {
 	const characterList = await getCharacterList(userId);
 	let characterIds = [];
-	characterList.forEach((character) => characterIds.push(character.charaName));
+	characterList.forEach((character) => characterIds.push(character.characterName));
 	await redisClient.sadd(`characterLists:${userId}`, characterIds);
 
 	let characterOwnerMap = {};
-	characterList.forEach((character) => (characterOwnerMap[character.charaName] = userId));
+	characterList.forEach((character) => (characterOwnerMap[character.characterName] = userId));
 	await redisClient.hmset(`characterOwnerMaps`, characterOwnerMap);
 
 	return characterIds;
@@ -23,11 +23,11 @@ async function verifyUserOwnsCharacter(userId, characterId) {
 async function getOwnedCharacters(userId) {
 	const characterList = await getCharacterList(userId);
 	let characterIds = [];
-	characterList.forEach((character) => characterIds.push(character.charaName));
+	characterList.forEach((character) => characterIds.push(character.characterName));
 	await redisClient.sadd(`characterLists:${userId}`, characterIds);
 
 	let characterOwnerMap = {};
-	characterList.forEach((character) => (characterOwnerMap[character.charaName] = userId));
+	characterList.forEach((character) => (characterOwnerMap[character.characterName] = userId));
 	await redisClient.hmset(`characterOwnerMaps`, characterOwnerMap);
 
 	return characterIds;

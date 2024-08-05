@@ -1,0 +1,36 @@
+body,
+html {
+	height: 100%;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+}
+
+.editor-container {
+	width: calc(100% - 48px);
+	height: auto;
+	padding: 24px;
+
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+
+.mce-container {
+	flex: 1 1 auto;
+}
+
+.bottom {
+	display: flex;
+	align-items: center;
+
+	flex-direction: row;
+	padding: 0.5rem;
+	margin-top: 12px;
+}
+
+.bottom > div {
+	flex: 1 1 auto;
+}

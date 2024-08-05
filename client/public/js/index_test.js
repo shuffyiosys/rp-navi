@@ -153,17 +153,17 @@ function updateCharacterList(response) {
 		const characterRow = `
 			<div class="flex-container">
 				<div class="flex-items">
-					<p>${element.charaName}</p>
+					<p>${element.characterName}</p>
 				</div>
 				<div class="flex-items">
-					<p><button id="delete-${element.charaName}">Delete</button></p>
-					<p><a href="/character/edit?character=${element.charaName}">Edit</a></p>
+					<p><button id="delete-${element.characterName}">Delete</button></p>
+					<p><a href="/character/edit?character=${element.characterName}">Edit</a></p>
 				</div>
 			</div>`;
 
 		document.querySelector("#characterList").insertAdjacentHTML("beforeend", characterRow);
-		document.querySelector(`#delete-${element.charaName}`).onclick = () => {
-			sendAjaxPost({ charaName: element.charaName }, "/character/delete");
+		document.querySelector(`#delete-${element.characterName}`).onclick = () => {
+			sendAjaxPost({ characterName: element.characterName }, "/character/delete");
 		};
 	});
 	updateStatus(response);

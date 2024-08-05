@@ -11,11 +11,8 @@ async function createCharacter(characterName, accountId) {
 		const ownerId = ObjectId(accountId);
 		logger.info(`${accountId} is attempting to create a character ${characterName}`);
 		characterData = await model.create({
-			charaName: characterName,
+			characterName: characterName,
 			owner: ownerId,
-			profileHtml: "",
-			profileCss: "",
-			profileJs: "",
 		});
 	} catch (error) {
 		logger.warn(`Error in [createCharacter] ${formatJson(error)}`);
@@ -25,12 +22,17 @@ async function createCharacter(characterName, accountId) {
 }
 
 async function getCharacterExists(characterName) {
-	return await model.exists({ charaName: characterName });
+	return await model.exists({ characterName: characterName });
 }
 
 async function getCharacterList(accountId) {
 	const ownerId = ObjectId(accountId);
-	return model.find({ owner: ownerId }, "charaName");
+	const characters = await model.find({ owner: ownerId }, "characterName -_id");
+	const list = [];
+	characters.forEach((entry) => {
+		list.push(entry.characterName);
+	});
+	return list.sort();
 }
 
 async function getCharacterCount(accountId) {
@@ -39,30 +41,39 @@ async function getCharacterCount(accountId) {
 }
 
 async function getCharacterProfile(characterName) {
-	return model.findOne({ charaName: characterName }, "charaName profileHtml profileCss profileJs");
+	return model.findOne(
+		{ characterName: characterName },
+		"characterName profileHtml profileCss profileJs includeJquery -_id"
+	);
 }
 
 async function getCharacterData(characterName) {
-	return model.findOne({ charaName: characterName });
+	return model.findOne({ characterName: characterName });
 }
 
 async function updateProfile(characterName, accountId, updateData) {
-	const ownerId = ObjectId(accountId);
-	const characterData = await model.findOne({ charaName: characterName, owner: ownerId });
-	if (characterData !== null) {
-		characterData.profileHtml = updateData.profileHtml;
-		characterData.profileCss = updateData.profileCss;
-		characterData.profileJs = updateData.profileJs;
-		const response = await characterData.save();
-		return response;
+	try {
+		const ownerId = ObjectId(accountId);
+		const characterData = await model.findOne({ characterName: characterName, owner: ownerId });
+		if (characterData !== null) {
+			characterData.profileHtml = updateData.profileHtml || characterData.profileHtml;
+			characterData.profileCss = updateData.profileCss || characterData.profileCss;
+			characterData.profileJs = updateData.profileJs || characterData.profileJs;
+			characterData.includeJquery = updateData.includeJquery || characterData.includeJquery;
+			const response = await characterData.save();
+			return response;
+		}
+	} catch (error) {
+		logger.warn(`[updateProfile] Error saving profile: ${formatJson(error)}`);
 	}
+
 	return null;
 }
 
 async function deleteCharacter(characterName, accountId) {
 	const ownerId = ObjectId(accountId);
 	logger.info(`${accountId} is deleting their character ${characterName}`);
-	const operationResult = await model.deleteOne({ charaName: characterName, owner: ownerId });
+	const operationResult = await model.deleteOne({ characterName: characterName, owner: ownerId });
 	return operationResult;
 }
 

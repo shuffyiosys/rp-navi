@@ -1,3 +1,11 @@
-h3= message
-p= error.status
-pre #{error.stack}
+doctype html
+html 
+	head
+		title="Server error: " + error.status
+		link(rel="stylesheet", href="/css/common.css")
+		link(rel="stylesheet", href="/css/error.css")
+	body 
+		div.card.content-card
+			h3 Error: #{message}
+			p Status code: #{error.status}
+			pre #{error.stack}

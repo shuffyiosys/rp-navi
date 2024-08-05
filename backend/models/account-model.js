@@ -41,6 +41,11 @@ let accountSchema = new mongoose.Schema(
 			default: false,
 		},
 
+		advancedEditor: {
+			type: Boolean,
+			default: false,
+		},
+
 		blocked: [ObjectId],
 	},
 	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }

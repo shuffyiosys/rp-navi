@@ -34,7 +34,7 @@ async function setupApp() {
 	let app = express();
 
 	/* Load and setup security packages **************************************/
-	require("./loaders/security")(app, config);
+	// require("./loaders/security")(app, config);
 
 	/* Load and setup server middleware **************************************/
 	const clientPaths = {
@@ -76,7 +76,6 @@ async function setupApp() {
 	}
 
 	async function cleanup() {
-		console.log("");
 		logger.info(`Shutting down Socket.IO server`);
 		socketIoServer.close();
 

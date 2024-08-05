@@ -2,61 +2,37 @@ doctype html
 html 
 	head
 		title="Index"
-		script(src="./js/index_test.js" defer)
-		link(rel="stylesheet", href="./css/index.css")
+		link(rel="stylesheet", href="/css/common.css")
+		link(rel="stylesheet", href="/css/index.css")
+		script(src="/js/utilities.js")
+		script(src="/js/index.js" defer)
 	body 
-		div.content
-			a(href="chat", target="_blank", rel="noopener noreferrer") Chat link
-			div.formStyle
-				label Email: 
-					input#emailInput(type="text")
-				br
-				label Password: 
-					input#passwordInput(type="password")
-				br
-				br
-				button#signupSubmit Sign up
-				button#loginSubmit Login
-				button#forgotPassword Forgot Password
-				br
-				br
-				label Reset password:
-					input#resetPasswordInput(type="password")
-				br
-				label Reset token:
-					input#resetTokenInput(type="text")
-					button#resetPasswordBtn Reset Password
-
-			div.formStyle
-				p Account Actions
-				button#logOutBtn Logout 
-				button#getData Get account data
-				button#getVerification Resend Verification
-				br
-				br
-				label Change Email: 
-				input#newEmailInput(type="email")
-				button#updateEmail Update
-				br
-				br
-				label Change Password:
-				input#newPasswordInput(type="password")
-				button#updatepasswordBtn Update
-				br
-				br
-				button#deleteAccountBtn Delete
-			div.formStyle
-				p Character Actions
-				button#getCharactersBtn Get characters
-				br
-				br
-				label Create character: 
-				input#newCharacterInput(type="text")
-				button#newCharacter Create
-				br
-				br
-				div#characterList
-					div.flex-container
-		div.formStyle
-			p Messages
-			ul#statusMessage
+		div.card.main-card
+			div.card-item 
+				h2 Welcome to RP Navi!
+				p A place where you can create characers and roleplay or something.
+				
+			div.card-item
+				unless data.loggedIn
+					div.form-style
+						h2(style="margin-bottom: 3rem;") Log in
+						label Email
+						input#email-input(type="email" name="email-input")
+						label#email-error.error-label
+						label Password
+						input#password-input(type="password" name="password-input")
+						label#password-error.error-label
+						p 
+							a#forgot-pw-btn(href="/forgot-password") Forgot Password?
+						br
+						label#error-message.error-label
+						p(style="text-align:right;")
+							a#create-account-btn(href="#") Create account
+							button#login-btn.btn.btn-primary Login
+				else 
+					p Welcome!
+					p 
+						a(href="/account") Account Page
+					p 
+						a(href="/chat") Go chat!
+					button#logout-btn.btn.btn-primary Logout

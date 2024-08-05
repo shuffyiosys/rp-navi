@@ -4,15 +4,16 @@
  */
 const { validationResult } = require(`express-validator`);
 
-const { AjaxResponse } = require(`../classes/ajax-response`);
 const config = require(`../config/config`)();
-const { VERIFY_ACTION } = require(`../data/verify-token-data`);
 const accountService = require(`../services/mongodb/account-service`);
 const verifyService = require(`../services/mongodb/verify-token-service`);
 const mailer = require(`../utils/mailer`);
+const { AjaxResponse } = require(`../classes/ajax-response`);
+const { VERIFY_ACTION } = require(`../data/verify-token-data`);
 const { logger, formatJson } = require(`../utils/logger`);
 const { verifyNoReqErrors } = require(`../utils/controller-utils`);
 const { PERMISSION_LEVELS } = require(`../data/account-data`);
+const { PageRenderParams } = require("../classes/page-render-params");
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -55,7 +56,8 @@ async function createAccount(req, res) {
 	const body = req.body;
 
 	if (errors.isEmpty() === false) {
-		res.json(errors.array());
+		response = new AjaxResponse("error", "Errors with input", errors.array());
+		res.json(response);
 		return;
 	} else if (await accountService.accountExists(body.email)) {
 		res.json({
@@ -81,6 +83,17 @@ async function createAccount(req, res) {
 		res.json(new AjaxResponse(`info`, `Account created`, {}));
 	} else {
 		res.json(new AjaxResponse(`error`, `Error creating an account`, {}));
+	}
+}
+
+async function getAccountPage(req, res) {
+	if (`userId` in req.session === false) {
+		res.redirect("/");
+		return;
+	} else {
+		const accountData = await accountService.getAccountData(req.session.userId);
+		const pageData = new PageRenderParams(`Account page for ${accountData.email}`, accountData, res.locals);
+		res.render("account/index", pageData);
 	}
 }
 
@@ -116,11 +129,12 @@ async function loginAccount(req, res) {
 	console.log(req.body);
 	const errors = validationResult(req);
 	if (errors.isEmpty() === false) {
-		res.json(errors.array());
-		return true;
+		response = new AjaxResponse("error", "Errors with input", errors.array());
+		res.json(response);
+		return;
 	} else if (`userId` in req.session === true) {
 		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
-		return true;
+		return;
 	}
 
 	const body = req.body;
@@ -191,16 +205,16 @@ async function updatePassword(req, res) {
 }
 
 async function requestPasswordReset(req, res) {
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
+	const errors = validationResult(req);
+	if (errors.isEmpty() === false) {
+		response = new AjaxResponse("error", "Errors with input", errors.array());
 		res.json(response);
 		return;
+	} else if (`userId` in req.session === true) {
+		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
+		return;
 	} else {
-		response = new AjaxResponse(
-			`info`,
-			`If the email address is registered, a password reset mail will be sent to it`,
-			{}
-		);
+		response = new AjaxResponse(`info`, ``, {});
 	}
 
 	const body = req.body;
@@ -347,6 +361,7 @@ async function deleteAccount(req, res) {
 
 module.exports = {
 	createAccount,
+	getAccountPage,
 	getAccountData,
 	logoutAccount,
 	loginAccount,

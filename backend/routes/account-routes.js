@@ -7,6 +7,7 @@ const { check, query } = require("express-validator");
 
 const {
 	createAccount,
+	getAccountPage,
 	getAccountData,
 	logoutAccount,
 	loginAccount,
@@ -25,6 +26,8 @@ const {
 const basepath = "/account";
 
 /* GET routers ***************************************************************/
+router.get("/", getAccountPage);
+
 router.get("/data", getAccountData);
 
 router.get("/resendVerify", resendVerification);
@@ -88,7 +91,7 @@ router.post(
 );
 
 router.post(
-	"/forgotPassword",
+	"/forgot-password",
 	[
 		check("email")
 			.notEmpty()

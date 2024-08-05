@@ -2,8 +2,71 @@ doctype html
 html 
 	head
 		title="Index"
-		script(src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous") 
-		<script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
-		script(src="./js/sio-client.js" defer)
+		script(src="./js/index_test.js" defer)
+		link(rel="stylesheet", href="/css/index.css")
+		link(rel="stylesheet", href="/css/common.css")
 	body 
-		p Do some testing in the console!
+		div.header
+			div
+				h2 RP Navi
+			div 
+				a About
+				| 
+				a Chat
+				| 
+				a Group
+		div.content
+			a(href="chat", target="_blank", rel="noopener noreferrer") Chat link
+			div.form-style
+				label Email: 
+					input#emailInput(type="text")
+				br
+				label Password: 
+					input#passwordInput(type="password")
+				br
+				br
+				button#signupSubmit Sign up
+				button#loginSubmit Login
+				button#forgotPassword Forgot Password
+				br
+				br
+				label Reset password:
+					input#resetPasswordInput(type="password")
+				br
+				label Reset token:
+					input#resetTokenInput(type="text")
+					button#resetPasswordBtn Reset Password
+
+			div.form-style
+				p Account Actions
+				button#logOutBtn Logout 
+				button#getData Get account data
+				button#getVerification Resend Verification
+				br
+				br
+				label Change Email: 
+				input#newEmailInput(type="email")
+				button#updateEmail Update
+				br
+				br
+				label Change Password:
+				input#newPasswordInput(type="password")
+				button#updatepasswordBtn Update
+				br
+				br
+				button#deleteAccountBtn Delete
+			div.form-style
+				p Character Actions
+				button#getCharactersBtn Get characters
+				br
+				br
+				label Create character: 
+				input#newCharacterInput(type="text")
+				button#newCharacter Create
+				br
+				br
+				div#characterList
+					div.flex-container
+		div.form-style
+			p Messages
+			ul#statusMessage

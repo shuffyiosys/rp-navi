@@ -54,10 +54,11 @@ async function accountExists(email) {
  * @returns An object from the DB of the account data
  */
 async function getAccountData(accountId = null, email = null) {
+	let items = "_id email verified";
 	if (accountId) {
-		return await model.findById(accountId);
+		return await model.findById(accountId, items);
 	} else if (email) {
-		return await model.findOne({ email });
+		return await model.findOne({ email }, items);
 	} else {
 		return null;
 	}

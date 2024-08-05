@@ -256,7 +256,7 @@ socket.on("character list", (resp) => {
 	characterList = [];
 	resp = resp.sort();
 	resp.forEach((data) => {
-		const name = data.charaName;
+		const name = data.characterName;
 		characterList.push(name);
 		let nameSelectHtml = `<p><input type="radio" id="${name}-room-select" value="${name}" name="room-character-radio"></input> <label for="${name}-room-select">${name}</label></p>`;
 		$(`div#join-character-list`).append(nameSelectHtml);

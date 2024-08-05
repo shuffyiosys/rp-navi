@@ -1,4 +1,55 @@
-#editor-css,
-#editor-js {
+html {
+	height: 100%;
+}
+
+body {
+	height: calc(100% - 2rem);
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.source-container {
+	display: flex;
+	flex-direction: row;
+	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
+}
+
+.source-container > div {
+	flex: 33%;
+}
+
+.source-item {
+	margin-right: 0.5rem;
+	padding: 1rem;
+}
+
+.source-item > textarea {
 	width: 100%;
+}
+
+.output {
+	flex-grow: 1;
+	margin-top: 1rem;
+	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
+	padding: 1rem;
+}
+
+.output > iframe {
+	border: 1px solid #333;
+	width: 100%;
+	height: 100%;
+}
+
+.bottom {
+	display: flex;
+	align-items: center;
+
+	flex-direction: row;
+	padding: 0.5rem;
+	margin: 12px;
+}
+
+.bottom > div {
+	flex: 1 1 auto;
 }
