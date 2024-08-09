@@ -26,6 +26,11 @@ router.get("/editor", getProfileEditor);
 
 router.get("/editor-advanced", getProfileEditor);
 
+router.get("/editor-help", (req, res) => {
+	const pageData = new PageRenderParams("Profile Editor Help", {}, res.locals);
+	res.render("character/editor-help", pageData);
+});
+
 /* res.json responses */
 router.get("/profile-data", getProfileData);
 

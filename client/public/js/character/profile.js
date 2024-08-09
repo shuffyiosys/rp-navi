@@ -23,7 +23,9 @@ document.addEventListener("DOMContentLoaded", function (arg) {
 						<script id="user-js"></script>
 					</head>
 					<body>
-						${response.data.profileHtml}
+						<div id="profile-container">
+							${response.data.profileHtml}
+						</div>
 					</body>
 				</html>
 			`;

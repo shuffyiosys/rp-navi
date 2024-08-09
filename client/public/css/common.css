@@ -7,6 +7,11 @@ html {
 	height: 100%;
 }
 
+body {
+	background-color: var(--color-dark-theme-bg);
+	box-sizing: border-box;
+}
+
 h1,
 h2,
 h3,
@@ -26,7 +31,9 @@ a:hover {
 }
 
 :root {
-	--color-dark: #2d3236;
+	--color-dark-theme-bg: #1e1f1c;
+
+	--color-dark: #272822;
 	--color-light: #f8f8f8;
 	--color-link: #5f90d8;
 
@@ -122,6 +129,9 @@ a:hover {
 div.card {
 	font-family: "Roboto";
 	border-radius: 0.5rem;
+
+	color: var(--color-light);
+	background-color: var(--color-dark);
 	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
 }
 
@@ -129,7 +139,7 @@ div.header {
 	display: flex;
 	flex-direction: row;
 
-	background-color: var(--color-dark);
+	background-color: #34352f;
 	color: var(--color-light);
 	padding: 1rem;
 	box-shadow: rgba(0, 0, 0, 0.5) 0.1rem 0.1rem 0.2rem;
@@ -148,9 +158,11 @@ div.header > div:nth-child(2) {
 	box-sizing: border-box;
 }
 
-.form-style > input {
+.form-style > input[type="password"],
+.form-style > input[type="email"],
+.form-style > input[type="text"] {
 	width: 100%;
 	height: 36px;
-	margin-bottom: 0.5rem;
+	margin-bottom: 0.75rem;
 	box-sizing: inherit;
 }

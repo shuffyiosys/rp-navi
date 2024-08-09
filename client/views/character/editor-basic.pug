@@ -7,16 +7,18 @@ html
 
 		script(src="/js/tinymce/tinymce.min.js" referrerpolicy="origin")
 		script(src="/js/utilities.js" referrerpolicy="origin") 
-		script(src="/js/editor.js" referrerpolicy="origin")
+		script(src="/js/editor-basic.js" referrerpolicy="origin")
 	body 
 		div.header
 			h2 Editing character: #{data.name}
 		div.editor-container
-			div.mce-container
+			div.card.mce-container
 				textarea#editor
 			div.card.bottom
 				div
 					a(href="/character/editor-advanced?character=" + data.name) Advanced editor
+					a(href="/character/editor-help" target="_blank" title="Help page" style="margin-left: 0.5rem;")
+						img(src="/img/icons8-help-100.png", alt="Help", srcset="" height="16px")
 				div(style="text-align: right;")
 					button#submit-editor-btn.btn.btn-primary Submit
 

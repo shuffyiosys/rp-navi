@@ -1,5 +1,4 @@
 body {
-	background-color: #ebf5fb;
 	margin: 0;
 	display: flex;
 	height: 100vh;
@@ -12,10 +11,7 @@ body {
 
 	width: 70vw;
 	max-width: 1280px;
-	height: 70vh;
 	min-height: 400px;
-
-	background-color: #fff;
 
 	display: flex;
 	flex-direction: column;
@@ -30,6 +26,14 @@ body {
 }
 
 .flex-item {
+	width: 50%;
 	margin: 0.5rem;
-	flex: 1 1 auto;
+}
+
+#new-character-inteactions {
+	display: flex;
+}
+
+#new-character-inteactions > p {
+	width: 50%;
 }

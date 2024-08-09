@@ -47,7 +47,9 @@ document.addEventListener("DOMContentLoaded", function (arg) {
 						<script id="user-js"></script>
 					</head>
 					<body>
-						${htmlEditor.value}
+						<div id="profile-container">
+							${htmlEditor.value}
+						</div>
 					</body>
 				</html>
 			`;

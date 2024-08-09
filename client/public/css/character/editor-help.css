@@ -1,0 +1,28 @@
+body {
+	display: flex;
+	flex-direction: column;
+	background-color: #ebf5fb;
+}
+
+h2 {
+	margin-bottom: 1rem;
+}
+
+h2:not(:nth-child(1)) {
+	margin-top: 1.25rem;
+}
+
+.content {
+	height: auto;
+	margin: 1rem auto 1rem auto;
+	padding: 1rem;
+
+	max-width: 1024px;
+	background-color: #fff;
+	overflow: auto;
+}
+
+.content > p {
+	text-align: justify;
+	margin-bottom: 1rem;
+}

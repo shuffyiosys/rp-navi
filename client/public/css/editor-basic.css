@@ -1,8 +1,3 @@
-body,
-html {
-	height: 100%;
-}
-
 body {
 	display: flex;
 	flex-direction: column;
@@ -19,16 +14,25 @@ body {
 }
 
 .mce-container {
+	margin: auto;
+	width: calc(800px - 0.5rem);
+	padding: 0.5rem;
+
 	flex: 1 1 auto;
+	background-color: #fff;
 }
 
 .bottom {
-	display: flex;
 	align-items: center;
-
+	display: flex;
 	flex-direction: row;
+
+	width: calc(800px - 0.5rem);
 	padding: 0.5rem;
+	margin: auto;
 	margin-top: 12px;
+
+	background-color: #fff;
 }
 
 .bottom > div {

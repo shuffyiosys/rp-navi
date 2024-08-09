@@ -40,6 +40,7 @@ async function setupApp() {
 	const clientPaths = {
 		views: path.join(__dirname, "../client/views"),
 		public: path.join(__dirname, "../client/public"),
+		public: path.join(__dirname, "../client/public"),
 	};
 	require("./loaders/server-middleware")(app, clientPaths);
 

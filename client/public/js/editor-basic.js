@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", function (arg) {
 			selector: "#editor",
 			license_key: "gpl",
 			height: "100%",
+			width: 770,
 			content_css: ["/css/character/profile-iframe-common.css"],
-
 			plugins: [
 				"advlist",
 				"autolink",
@@ -35,8 +35,8 @@ document.addEventListener("DOMContentLoaded", function (arg) {
 				"wordcount",
 			],
 			toolbar:
-				"undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview | save print | pagebreak anchor codesample | ltr rtl",
-			content_style: profileData.css || "body { font-family:Helvetica,Arial,sans-serif; font-size:16px }",
+				"undo redo | accordion accordionremove | blocks fontfamily fontsize | bold italic underline strikethrough | align numlist bullist | link image | table media | lineheight outdent indent| forecolor backcolor removeformat | charmap emoticons | code fullscreen preview ",
+			content_style: profileData.css || "body { font-family:Helvetica,Arial,sans-serif; font-size:16px; }",
 			init_instance_callback: (editor) => {
 				editor.setContent(profileData.html);
 			},
