@@ -126,5 +126,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Other project files and directories
+*.code-workspace
 backend/node_modules
-docs/jsdoc
