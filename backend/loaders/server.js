@@ -17,7 +17,7 @@ async function createServers(app, config) {
 	};
 
 	/* Create HTTPS server */
-	if (config.certs.certFile && config.certs.keyFile) {
+	if (config.TLS_CERT_FILENAME && config.TLS_KEY_FILENAME) {
 		servers.httpsServer = startHttpsServer(app, config);
 	}
 
@@ -29,8 +29,8 @@ function startHttpsServer(app, config) {
 		httpServer: http.createServer(app),
 		httpsServer: null,
 	};
-	const certFilename = path.join(config.certs.path, config.certs.certFile);
-	const keyFilename = path.join(config.certs.path, config.certs.keyFile);
+	const certFilename = path.join(config.TLS_FILES_PATH, config.TLS_CERT_FILENAME);
+	const keyFilename = path.join(config.TLS_FILES_PATH, config.TLS_KEY_FILENAME);
 	logger.debug(`Using cert file ${certFilename}, key file ${keyFilename}`);
 
 	const keyFileExists = fs.existsSync(keyFilename);
@@ -53,7 +53,7 @@ function startServers(servers, config, type = "http") {
 	const httpsServer = servers.httpsServer;
 
 	if (type == "https") {
-		const port = config.httpsPort;
+		const port = config.HTTPS_PORT;
 		logger.info(`Starting ${type} server at port ${port}`);
 		httpsServer.listen(port, () => onListening(httpsServer));
 		httpsServer.on("error", (error) => onError(error, port));
@@ -62,7 +62,7 @@ function startServers(servers, config, type = "http") {
 		logger.info(`Starting http redirect server at port ${config.httpPort}`);
 		httpServer = http.createServer(redirectRequests).listen(config.httpPort);
 	} else {
-		const port = config.httpPort;
+		const port = config.HTTP_PORT;
 		logger.info(`Starting ${type} server at port ${port}`);
 		httpServer.listen(port, () => onListening(httpServer));
 		httpServer.on("error", (error) => onError(error, port));

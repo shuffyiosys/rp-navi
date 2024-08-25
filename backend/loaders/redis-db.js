@@ -29,21 +29,14 @@ function warnFailedInit() {
 	logger.warn(`[${scriptName}] Redis client hasn't been initialized!`);
 }
 
-function connectToServer(serverConfig) {
+function connectToServer(serverEnvironment) {
 	let params = {
-		host: "localhost",
-		port: "6379",
-		password: "",
+		host: serverEnvironment.REDIS_DB_IP,
+		port: serverEnvironment.REDIS_DB_PORT,
+		password: serverEnvironment.REDIS_DB_PASSWORD,
 	};
 
-	if (serverConfig) {
-		params = {
-			host: serverConfig.url || "localhost",
-			port: serverConfig.port || "6379",
-			password: serverConfig.password || "",
-		};
-	}
-	logger.info(`Connecting to Redis server with params ${formatJson(params, false)}`);
+	logger.debug(`Connecting to Redis server with params ${formatJson(params, false)}`);
 
 	redisClient = new Redis(params);
 	module.exports.redisClient = redisClient;

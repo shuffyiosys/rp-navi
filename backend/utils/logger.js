@@ -5,7 +5,6 @@
 const { createLogger, format, transports } = require("winston");
 const { combine, timestamp, colorize, splat, printf } = format;
 const path = require("path");
-require("winston-daily-rotate-file");
 
 function getOutputType(logName) {
 	let outputs = [];
@@ -50,6 +49,7 @@ const logger = createLogger({
 		splat(),
 		printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
 	),
+	level: process.env.LOG_LEVEL,
 	transports: getOutputType("server"),
 });
 

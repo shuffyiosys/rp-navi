@@ -6,12 +6,14 @@ const path = require("path");
 /* Setup environment ********************************************************/
 async function setupApp() {
 	const config = require("./config/config")();
-	const { logger, formatJson } = require("./utils/logger");
-	logger.debug(`Config: ${formatJson(config)}`);
+	const { logger } = require("./utils/logger"); // Order matters because logger needs the ENVs!
+
+	logger.info(`RP Navi server is running in the **${process.env.NODE_ENV}** environment`);
+	logger.info(`Logger level: ${logger.level}`);
 
 	/* Connect to DBs and check to make sure they're connected ***************/
 	const MongoDB = require("./loaders/mongo-db");
-	const mongoDbClient = await MongoDB.setup(config.database.mongo);
+	const mongoDbClient = await MongoDB.setup(config);
 	logger.info(`Mongo DB connection state: ${mongoDbClient.connection.readyState}`);
 	if (mongoDbClient.connection.readyState != 1) {
 		logger.warn(`Could not connect to the MongoDB server, exiting.`);
@@ -19,9 +21,10 @@ async function setupApp() {
 	}
 
 	const RedisDB = require("./loaders/redis-db");
-	await RedisDB.connectToServer(null);
-	logger.info(`Checking Redis connection via pinging...`);
-	if ((await RedisDB.pingServer()) == false) {
+	await RedisDB.connectToServer(config);
+	let redisPonged = await RedisDB.pingServer();
+	logger.info(`Redis connection successful: ${redisPonged}`);
+	if (!redisPonged) {
 		logger.warn(`Could not connect to the Redis server, exiting.`);
 		process.exit(0);
 	}
@@ -47,9 +50,9 @@ async function setupApp() {
 	/* Setup sessioning ******************************************************/
 	let sessionParams;
 	if (redisClient) {
-		sessionParams = require("./loaders/session").setupRedisSession(app, config.session, redisClient);
+		sessionParams = require("./loaders/session").setupRedisSession(app, config, redisClient);
 	} else {
-		sessionParams = require("./loaders/session").setupMemorySession(app, config.session);
+		sessionParams = require("./loaders/session").setupMemorySession(app, config);
 	}
 
 	/* Setup Routes **********************************************************/

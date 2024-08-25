@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const { generateKey } = require("../utils/crypto");
 
 async function load(app, config) {
-	if (config.environment !== "development") {
+	if (config.NODE_ENV !== "development") {
 		/* Setup variables to use in the various middleware that needs it. */
 		const SCRIPT_RULES = [
 			"strict-dynamic",
