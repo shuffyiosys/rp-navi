@@ -5,7 +5,11 @@ html
 		link(rel="stylesheet", href="/css/common.css")
 		link(rel="stylesheet", href="/css/index.css")
 		script(src="/js/utilities.js")
-		script(src="/js/index.js" defer)
+		unless data.loggedIn
+			script(src="/js/index.js" defer)
+		else
+			script(src="/js/index-logged-in.js" defer)
+
 	body 
 		div.card.dark-theme.main-card
 			div.card-item 
@@ -18,16 +22,16 @@ html
 						h2(style="margin-bottom: 3rem;") Log in
 						label Email
 						input#email-input(type="email" name="email-input")
-						label#email-error.error-label
+						label#email-error.error-label &#8203;
 						label Password
 						input#password-input(type="password" name="password-input")
-						label#password-error.error-label
+						label#password-error.error-label &#8203;
 						p 
 							a#forgot-pw-btn(href="/forgot-password") Forgot Password?
 						br
-						label#error-message.error-label
+						label#error-message.error-label &#8203;
 						p(style="text-align:right;")
-							a#create-account-btn(href="#") Create account
+							button#create-account-btn.btn.btn-secondary Create account
 							button#login-btn.btn.btn-primary Login
 				else 
 					p Welcome!

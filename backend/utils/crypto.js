@@ -42,6 +42,10 @@ function verifyPassword(passwordHash, password) {
 	return argon2.verify(passwordHash, hash.digest().toString("base64"));
 }
 
+function getMD5(input) {
+	return crypto.createHash("md5").update(input).digest("hex");
+}
+
 /*****************************************************************************
  * Exports
  */
@@ -49,4 +53,5 @@ module.exports = {
 	generateKey,
 	getPasswordHash,
 	verifyPassword,
+	getMD5,
 };

@@ -14,6 +14,7 @@ const { logger, formatJson } = require(`../utils/logger`);
 const { verifyNoReqErrors } = require(`../utils/controller-utils`);
 const { PERMISSION_LEVELS } = require(`../data/account-data`);
 const { PageRenderParams } = require("../classes/page-render-params");
+const { error } = require("winston");
 
 /**
  * @brief Creates a session to mark the user has logged in.
@@ -24,7 +25,6 @@ const { PageRenderParams } = require("../classes/page-render-params");
 function createSession(req, accountId) {
 	req.session.userId = accountId;
 	req.session.save();
-	logger.debug(`[createSession] ${req.session.userId}`);
 }
 
 /**
@@ -59,7 +59,8 @@ async function createAccount(req, res) {
 		response = new AjaxResponse("error", "Errors with input", errors.array());
 		res.json(response);
 		return;
-	} else if (await accountService.accountExists(body.email)) {
+	}
+	else if (await accountService.accountExists(body.email)) {
 		res.json({
 			type: `error`,
 			msg: `An account with this email address exists`,
@@ -81,7 +82,8 @@ async function createAccount(req, res) {
 			mailer.sendVerifyMail(body.email, body.email, tokenData.token);
 		}
 		res.json(new AjaxResponse(`info`, `Account created`, {}));
-	} else {
+	}
+	else {
 		res.json(new AjaxResponse(`error`, `Error creating an account`, {}));
 	}
 }
@@ -126,7 +128,6 @@ async function logoutAccount(req, res) {
  * @param {*} res
  */
 async function loginAccount(req, res) {
-	console.log(req.body);
 	const errors = validationResult(req);
 	if (errors.isEmpty() === false) {
 		response = new AjaxResponse("error", "Errors with input", errors.array());
@@ -167,7 +168,7 @@ async function updateEmail(req, res) {
 		return;
 	}
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	response = new AjaxResponse(`info`, `Email not updated`, { modifiedCount: 0 });
+	response = new AjaxResponse(`error`, `Email not updated`, { modifiedCount: 0 });
 	if (accountData) {
 		const updateData = await accountService.updateEmail(req.session.userId, body.newEmail);
 		response.data = updateData;
@@ -185,23 +186,21 @@ async function updateEmail(req, res) {
  * @param {*} res
  */
 async function updatePassword(req, res) {
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
+	const errors = verifyNoReqErrors(req, res);
+	let response = new AjaxResponse(`error`, `Password not updated`, {});
+	if (errors !== null) {
+		response.data = errors;
 		res.json(response);
 		return;
 	}
 
 	const body = req.body;
 	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	response = new AjaxResponse(`info`, `Password not updated`, { modifiedCount: 0 });
 	if (accountData !== null) {
-		const updateData = await accountService.updatePassword(req.session.userId, body.newPassword);
-		response.data = updateData;
-		response.msg = JSON.stringify(updateData);
-		res.json(response);
-	} else {
-		res.json(response);
+		response.type = "info";
+		response.msg = "";
 	}
+	res.json(response);
 }
 
 async function requestPasswordReset(req, res) {
@@ -231,14 +230,9 @@ async function requestPasswordReset(req, res) {
 
 	const resetPwToken = await verifyService.generateToken(VERIFY_ACTION.RESET_PASSWORD, accountData.id.toString());
 	if (resetPwToken) {
-		response = new AjaxResponse(
-			`info`,
-			`Password reset generated at <a href="account/resetPassword?token=${resetPwToken.token}">this link</a>`,
-			{
-				token: resetPwToken.token,
-			}
-		);
+		response = new AjaxResponse(`info`, {}, res.locals);
 	}
+	logger.debug(`Password reset link: /account/reset-password?token=${resetPwToken.token}`);
 	res.json(response);
 }
 
@@ -249,16 +243,19 @@ async function verifyPasswordReset(req, res) {
 	}
 
 	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
+	const pageData = new PageRenderParams(`Reset password`, { canReset: false }, res.locals);
+
 	if (resetToken) {
-		res.json(new AjaxResponse(`info`, `Password reset link verified`, {}));
-	} else {
-		res.json(new AjaxResponse(`error`, `Password reset expired`, {}));
+		pageData.data.token = resetToken;
+		pageData.data.canReset = true;
 	}
+	res.render("account/reset-password", pageData);
 }
 
 async function updatePasswordReset(req, res) {
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
+	const errors = validationResult(req);
+	if (errors.isEmpty() === false) {
+		let response = new AjaxResponse(`error`, `Error with password input`, errors);
 		res.json(response);
 		return;
 	}
@@ -269,18 +266,15 @@ async function updatePasswordReset(req, res) {
 		res.json(new AjaxResponse(`error`, `Password reset request expired`, {}));
 		return;
 	}
+
 	await verifyService.deleteToken(req.query.token);
-	const accountData = await accountService.getAccountData(resetToken.referenceId);
-	response = new AjaxResponse(`error`, `Error with handling password reset`, {});
-	if (accountData) {
-		const updateData = await accountService.updatePassword(resetToken.referenceId, req.body.newPassword);
+	let response = new AjaxResponse(`error`, `Error with handling password reset`, {});
+	const updateData = await accountService.updatePassword(resetToken.referenceId, req.body.newPassword);
+	if (updateData.modifiedCount == 1) {
 		response.type = `info`;
-		response.msg = `Password update information`;
-		response.data = updateData;
-		res.json(response);
-	} else {
-		res.json(response);
+		response.msg = `Password updated`;
 	}
+	res.json(response);
 }
 
 /** Verification handlers ****************************************************/

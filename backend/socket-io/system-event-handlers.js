@@ -1,6 +1,6 @@
 const { logger } = require(`../utils/logger`);
 
-async function setupHandlers(io, socket) {
+async function connectHandlers(io, socket) {
 	socket.use(([event], next) => {
 		socket.event = event;
 		next();
@@ -44,5 +44,5 @@ function handle_postSystemMessage(io, socket, data) {
 }
 
 module.exports = {
-	setupHandlers,
+	connectHandlers,
 };

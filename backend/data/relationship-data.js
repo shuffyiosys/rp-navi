@@ -1,10 +1,7 @@
 const RELATIONSHIP_TYPE = Object.freeze({
-	/* One way relationships */
-	BLOCKED: -1,
-
 	/* Two way relationships */
-	FRIEND_REQUEST: 1,
-	FRIEND: 2,
+	FRIEND_REQUEST: 1,			// User A wants to be friends with User B
+	FRIEND: 2,					// User A is friends with User B
 });
 
 module.exports = {

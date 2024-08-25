@@ -11,15 +11,21 @@ function loadModule() {
 
 /*****************************************************************************/
 async function createRoom(data) {
-	const roomName = data.roomName;
-	const roomQuery = `room:${roomName}`;
-	const isPrivate = data["privateRoom"] || false;
+	const roomQuery = `room:${data.roomName}`;
+	let newRoom = {
+		roomName: data.roomName,
+		owner: data.characterName,
+		isPrivate: data.isPrivate || false,
+		description: data.description || "",
+		password: data.password || "",
+	};
 
-	if (isPrivate == false) {
-		await redisClient.sadd("publicRoomNames", roomName);
+	logger.debug(`Creating room ${newRoom}`);
+	if (newRoom.isPrivate == false) {
+		await redisClient.sadd("publicRoomNames", data.roomName);
 	}
-	await redisClient.sadd("roomNames", roomName);
-	return await redisClient.hset(roomQuery, data);
+	await redisClient.sadd("roomNames", data.roomName);
+	return await redisClient.hset(roomQuery, newRoom);
 }
 
 async function removeRoom(roomName) {
@@ -35,6 +41,8 @@ async function removeRoom(roomName) {
 	deletedData.mods = await redisClient.del(modsQuery);
 	deletedData.banned = await redisClient.del(bannedQuery);
 	deletedData.logs = await redisClient.del(logQuery);
+	redisClient.srem("publicRoomNames", roomName);
+	redisClient.srem("roomNames", roomName);
 
 	return deletedData;
 }
@@ -51,32 +59,26 @@ async function checkRoomExists(roomName) {
 async function getRoomData(roomName, modRequest = false) {
 	const roomQuery = `room:${roomName}`;
 	let roomData = await redisClient.hgetall(roomQuery);
-	logger.info(`Room Data Request = ${formatJson(roomData)}, ${modRequest}`);
 
-	if (roomData === null) {
+	if (Object.keys(roomData).length === 0) {
 		return roomData;
-	} else if (modRequest == true) {
-		const inRoom = await redisClient.smembers(`room:${roomName}:inRoom`);
-		const mods = await redisClient.smembers(`room:${roomName}:mods`);
-		const banned = await redisClient.smembers(`room:${roomName}:banned`);
+	}
 
+	roomData.mods = await redisClient.smembers(`room:${roomName}:mods`);
+	roomData.users = await redisClient.smembers(`room:${roomName}:inRoom`);
+
+	if (modRequest) {
+		const banned = await redisClient.smembers(`room:${roomName}:banned`);
 		if (roomData.password.length > 0) {
 			roomData.password = true;
 		} else {
 			roomData.password = false;
 		}
-		if (inRoom) {
-			roomData.inRoom = inRoom;
-		}
-		if (mods) {
-			roomData.mods = mods;
-		}
 		if (banned) {
 			roomData.banned = banned;
 		}
 	} else {
-		delete roomData.owner;
-		delete roomData.private;
+		delete roomData.privateRoom;
 		delete roomData.password;
 	}
 
@@ -102,6 +104,11 @@ async function setPrivate(roomName, privacy) {
 async function addInRoom(roomName, characterId) {
 	const inRoomQuery = `room:${roomName}:inRoom`;
 	return await redisClient.sadd(inRoomQuery, characterId);
+}
+
+async function getUsersInRoom(roomName) {
+	const inRoomQuery = `room:${roomName}:inRoom`;
+	return await redisClient.smembers(inRoomQuery);
 }
 
 async function removeInRoom(roomName, characterId) {
@@ -143,7 +150,8 @@ async function addMod(roomName, characterId) {
 
 async function isMod(roomName, characterId) {
 	const modsQuery = `room:${roomName}:mods`;
-	return await redisClient.sismember(modsQuery, characterId);
+	logger.debug(`isMod query: ${modsQuery}, ${characterId}`);
+	return (await redisClient.sismember(modsQuery, characterId)) == 1;
 }
 
 async function isOwner(roomName, characterId) {
@@ -162,8 +170,6 @@ async function switchOwner(roomName, targetId) {
 	const roomQuery = `room:${roomName}`;
 	await redisClient.hset(roomQuery, { owner: targetId });
 }
-
-async function setBanned(roomName, bannedData) {}
 
 async function addBanned(roomName, characterId) {
 	const bannedQuery = `room:${roomName}:banned`;
@@ -217,6 +223,7 @@ module.exports = {
 
 	/* Functions for joining, leaving, and checking access to room*/
 	addInRoom,
+	getUsersInRoom,
 	removeInRoom,
 	clearInRoom,
 	checkInRoom,
@@ -230,7 +237,6 @@ module.exports = {
 	switchOwner,
 	isMod,
 	isOwner,
-	setBanned,
 	addBanned,
 	removeBanned,
 	checkIfBanned,

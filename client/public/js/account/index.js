@@ -2,7 +2,14 @@
 document.addEventListener("DOMContentLoaded", (arg) => {
 	/** Account stats update */
 	function handleAccountUpdateResponse(response) {
+		console.log(response);
+		let passwordErr = document.getElementById("password-error");
 		if (response.type == "error") {
+			passwordErr.classList.add("error-label");
+			passwordErr.innerHTML = "Error updating account (wrong password?)";
+		} else {
+			passwordErr.classList.remove("error-label");
+			passwordErr.innerHTML = "Account updated";
 		}
 	}
 
@@ -18,11 +25,12 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		if (!data.newEmail) {
 			document.getElementById("new-email-error").innerHTML = "Enter a new email address";
 		} else if (!data.password) {
+			passwordErr.classList.add("error-label");
 			document.getElementById("password-error").innerHTML = "Enter your password";
 		} else if (data.newEmail.search(/.+@\S+\.\S+/) == -1) {
 			document.getElementById("new-email-error").innerHTML = "Invalid email format entered";
 		} else {
-			sendAjaxPost(data, `/account/update-email`);
+			sendAjaxPost(data, `/account/update-email`, handleAccountUpdateResponse);
 		}
 	};
 
@@ -41,9 +49,10 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		if (data.newPassword.length < 8) {
 			document.getElementById("new-password-error").innerHTML = "New password must be at least 8 characters";
 		} else if (!data.password) {
+			passwordErr.classList.add("error-label");
 			document.getElementById("password-error").innerHTML = "Enter your password";
 		} else {
-			sendAjaxPost(data, `/account/update-password`);
+			sendAjaxPost(data, `/account/update-password`, handleAccountUpdateResponse);
 		}
 	};
 
@@ -56,21 +65,6 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 
 	function populateCharacterRow(characterName, appendType = "beforeend") {
 		const htmlName = characterName.toLowerCase().replaceAll(" ", "-");
-		// let characterRow = `<div id="${htmlName}-entry" class="flex-container">
-		// 			<div class="flex-item">
-		// 				<p><a href="/character/profile?name=${characterName}">${characterName}</a></p>
-		// 			</div>
-		// 			<div class="flex-item">
-		// 				<p>
-		// 					<a href="/character/editor?character=${characterName}" style="margin-right: 2rem;">Edit</a>
-		// 					<button id="delete-${htmlName}" class="btn btn-danger" data-clicks="0">Delete</button>
-		// 					</p>
-		// 			</div>
-		// 		</div>`;
-
-		// characterRow = characterRow.replaceAll("\n", "");
-		// characterRow = characterRow.replaceAll("\t", "");
-
 		let characterRow = document.createElement("div");
 		characterRow.id = `${htmlName}-entry`;
 		characterRow.classList.add("flex-container");
@@ -91,7 +85,6 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 			let node = characterList.childNodes[i];
 			let idText = node.getAttribute("id");
 
-			console.log(idText, htmlName, htmlName < idText);
 			if (idText && htmlName < idText) {
 				rowInserted = true;
 				characterList.insertBefore(characterRow, characterList.childNodes[i]);
@@ -103,7 +96,6 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 			document.querySelector("#character-list").insertAdjacentHTML(appendType, characterRow.outerHTML);
 		}
 
-		// document.querySelector("#character-list").insertAdjacentHTML(appendType, characterRow);
 		const deleteCharacterBtn = document.querySelector(`#delete-${htmlName}`);
 		deleteCharacterBtn.onclick = () => {
 			handleDeleteBtn(deleteCharacterBtn, characterName);

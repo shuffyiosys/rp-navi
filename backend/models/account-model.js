@@ -2,12 +2,9 @@
  * Defines the database schema for user account data
  * @file models/account-model.js
  */
-const mongoose = require("mongoose");
+const { Schema, model } = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 const { PERMISSION_LEVELS } = require("../data/account-data");
-
-const Schema = mongoose.Schema;
-const ObjectId = Schema.ObjectId;
 
 /**
  * Database schema for accounts
@@ -15,9 +12,8 @@ const ObjectId = Schema.ObjectId;
  * @property {String} password - Password to authenticate. This should be hashed
  * @property {Number} permissions - Permissions level that the account is set to
  * @property {Boolean} verified - Account's email has been verified
- * @property {Array} blocked - Array of blocked accounts
  */
-let accountSchema = new mongoose.Schema(
+let accountSchema = new Schema(
 	{
 		email: {
 			type: String,
@@ -41,14 +37,9 @@ let accountSchema = new mongoose.Schema(
 			default: false,
 		},
 
-		advancedEditor: {
-			type: Boolean,
-			default: false,
-		},
-
-		blocked: [ObjectId],
+		blocked: [Schema.ObjectId]
 	},
 	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }
 );
 
-mongoose.model(MODEL_NAMES.ACCOUNT, accountSchema);
+model(MODEL_NAMES.ACCOUNT, accountSchema);

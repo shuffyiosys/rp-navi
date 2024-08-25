@@ -34,7 +34,7 @@ router.get("/resendVerify", resendVerification);
 
 router.get("/verify", [query("token").notEmpty().withMessage("Nothing to verify here...")], verifyAccount);
 
-router.get("/resetPassword", [query("token").notEmpty()], verifyPasswordReset);
+router.get("/reset-password", [query("token").notEmpty()], verifyPasswordReset);
 
 /* POST routers **************************************************************/
 router.post(
@@ -46,7 +46,7 @@ router.post(
 			.normalizeEmail()
 			.isEmail()
 			.withMessage("Invalid email address format"),
-		check("password", "Password must be at least 6 characters in length").isLength({ min: 6 }),
+		check("password", "Password must be at least 8 characters in length").isLength({ min: 8 }),
 	],
 	createAccount
 );
@@ -71,7 +71,7 @@ router.post(
 	"/update-password",
 	[
 		check("password", "No password entered").notEmpty(),
-		check("newPassword", "New password must be at least 6 characters in length").isLength({ min: 6 }),
+		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
 	],
 	updatePassword
 );
@@ -104,8 +104,11 @@ router.post(
 );
 
 router.post(
-	"/resetPassword",
-	[check("newPassword", "New password must be at least 6 characters in length").isLength({ min: 6 })],
+	"/reset-password",
+	[
+		check("newPassword", "No password entered").notEmpty(),
+		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
+	],
 	updatePasswordReset
 );
 

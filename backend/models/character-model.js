@@ -38,6 +38,13 @@ let characterSchema = new mongoose.Schema(
 			type: Boolean,
 			default: false,
 		},
+
+		friends: [
+			{
+				characterID: ObjectId,
+				type: Number
+			}
+		]
 	},
 	{ collation: { locale: "en_US", strength: 2 }, timestamps: true, autoIndex: false }
 );

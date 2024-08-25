@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", (arg) => {
 	function submitResponse(response) {
+		console.log(response);
 		if (response.type == "error") {
 			updateStatusMessage(response.data[0].msg, true);
 		} else {
@@ -22,13 +23,15 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 
 	let submitBtn = document.getElementById("submit-btn");
 	submitBtn.onclick = () => {
-		if (document.getElementById("email-input").value.length == 0) {
-			updateStatusMessage("No email entered", true);
+		if (document.getElementById("new-password-input").value.length == 0) {
+			updateStatusMessage("No password entered", true);
+		} else if (document.getElementById("new-password-input").value.length < 8) {
+			updateStatusMessage("Password must be 8 characters or more in length", true);
 		} else {
 			let data = {
-				email: document.getElementById("email-input").value,
+				newPassword: document.getElementById("new-password-input").value,
 			};
-			sendAjaxPost(data, "/account/forgot-password", submitResponse);
+			sendAjaxPost(data, "/account/reset-password", submitResponse);
 		}
 	};
 });

@@ -1,7 +1,5 @@
 const expressSession = require("express-session");
 const cookieParser = require("cookie-parser");
-const connectRedis = require("connect-redis");
-const redisStore = connectRedis(expressSession);
 
 const { logger, formatJson } = require("../utils/logger");
 
@@ -23,7 +21,32 @@ function setupMemorySession(app, sessionConfig) {
 	return applySession(app, sessionParams);
 }
 
+function setupMongoSession(app, sessionConfig, mongoDbConfig) {
+	const MongoStore = require("connect-mongo");
+	logger.info(`Using MongoStore sessioning`);
+
+	let sessionParams = {
+		name: sessionConfig.name,
+		secret: sessionConfig.secret,
+		resave: false,
+		saveUninitialized: true,
+		cookie: {
+			maxAge: parseInt(sessionConfig.ttl),
+			secure: false,
+			httpOnly: false,
+			secret: sessionConfig.cookieSecret,
+		},
+		store: MongoStore.create({
+			mongoUrl: mongoDbConfig.url,
+		}),
+	};
+
+	return applySession(app, sessionParams);
+}
+
 function setupRedisSession(app, sessionConfig, redisClient) {
+	const connectRedis = require("connect-redis");
+	const redisStore = connectRedis(expressSession);
 	logger.info(`Using Redis sessioning`);
 
 	let sessionParams = {
@@ -44,7 +67,7 @@ function setupRedisSession(app, sessionConfig, redisClient) {
 }
 
 function applySession(app, sessionParams) {
-	logger.debug(`Session configuration: ${formatJson(sessionParams)}`);
+	// logger.debug(`Session configuration: ${formatJson(sessionParams)}`);
 	const session = expressSession(sessionParams);
 	app.use(session);
 	app.use(cookieParser(sessionParams.cookie.secret));
@@ -53,5 +76,6 @@ function applySession(app, sessionParams) {
 
 module.exports = {
 	setupMemorySession,
+	setupMongoSession,
 	setupRedisSession,
 };

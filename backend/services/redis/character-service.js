@@ -1,47 +1,85 @@
 const { logger, formatJson } = require("../../utils/logger");
 const { redisClient } = require("../../loaders/redis-db");
-const { getCharacterList, getCharacterCount } = require("../mongodb/character-service");
 
-async function addUserCharacters(userId) {
-	const characterList = await getCharacterList(userId);
-	let characterIds = [];
-	characterList.forEach((character) => characterIds.push(character.characterName));
-	await redisClient.sadd(`characterLists:${userId}`, characterIds);
+async function createCharacterData(characterName) {
+	const key = `characterData:${characterName}`;
+	const doesExist = await redisClient.exists(key);
 
-	let characterOwnerMap = {};
-	characterList.forEach((character) => (characterOwnerMap[character.characterName] = userId));
-	await redisClient.hmset(`characterOwnerMaps`, characterOwnerMap);
+	if (doesExist == 0) {
+		let characterData = {
+			statusType: 0,
+			statusMsg: "",
+		};
 
-	return characterIds;
+		for (item in characterData) {
+			await redisClient.hset(key, item, characterData[item]);
+		}
+	}
+
+	return await redisClient.hgetall(key);
 }
 
-async function verifyUserOwnsCharacter(userId, characterId) {
-	const ownership = await redisClient.sismember(`characterLists:${userId}`, characterId);
-	return ownership == 1;
+async function getCharacterdata(characterName) {
+	return await redisClient.hgetall(`characterData:${characterName}`);
 }
 
-async function getOwnedCharacters(userId) {
-	const characterList = await getCharacterList(userId);
-	let characterIds = [];
-	characterList.forEach((character) => characterIds.push(character.characterName));
-	await redisClient.sadd(`characterLists:${userId}`, characterIds);
+async function updateCharacterStatusType(characterName, newStatus) {
+	const key = `characterData:${characterName}`;
+	const exists = await redisClient.exists(key);
 
-	let characterOwnerMap = {};
-	characterList.forEach((character) => (characterOwnerMap[character.characterName] = userId));
-	await redisClient.hmset(`characterOwnerMaps`, characterOwnerMap);
-
-	return characterIds;
-
-	return await redisClient.smembers(`characterLists:${userId}`);
+	if (exists == 1) {
+		await redisClient.hset(key, STATUS_TYPE_KEY, newStatus);
+	}
+	return await redisClient.hgetall(key);
 }
 
-async function getCharacterOwner(characterId) {
-	return await redisClient.hget(`characterOwnerMaps`, characterId);
+async function updateCharacterStatusMsg(characterName, newMessage) {
+	const key = `characterData:${characterName}`;
+	const exists = await redisClient.exists(key);
+
+	if (exists == 1) {
+		await redisClient.hset(key, STATUS_MSG_KEY, newMessage);
+	}
+	return await redisClient.hgetall(key);
+}
+
+async function addCharacterOwner(characterName, userId) {
+	let result = await redisClient.hset(`characterOwnership`, characterName, userId);
+	return result;
+}
+
+async function getCharacterOwner(characterName) {
+	return await redisClient.hget(`characterOwnership`, characterName);
+}
+
+async function addCharacterInRoom(characterName, roomName) {
+	const key = `inRoom:${characterName}`;
+	let result = await redisClient.sadd(key, roomName);
+	return result;
+}
+
+async function getRoomsWithCharacter(characterName) {
+	const key = `inRoom:${characterName}`;
+	return await redisClient.smembers(key);
+}
+
+async function removeRoomWithCharacter(characterName, roomName) {
+	const key = `inRoom:${characterName}`;
+	let result = await redisClient.srem(key, roomName);
+	return result;
 }
 
 module.exports = {
-	addUserCharacters,
-	verifyUserOwnsCharacter,
-	getOwnedCharacters,
+	createCharacterData,
+	getCharacterdata,
+
+	updateCharacterStatusType,
+	updateCharacterStatusMsg,
+
+	addCharacterOwner,
 	getCharacterOwner,
+
+	addCharacterInRoom,
+	getRoomsWithCharacter,
+	removeRoomWithCharacter,
 };

@@ -1,7 +1,7 @@
 const MODEL_NAMES = {
 	ACCOUNT: "Account",
 	CHARACTER: "Character",
-	RELATIONSHIP: "Relationship",
+	CHAT_ROOM: "ChatRoom",
 	GROUP: "Group",
 	VERIFY_TOKENS: "VerifyTokens",
 };

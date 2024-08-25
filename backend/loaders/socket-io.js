@@ -10,38 +10,42 @@ function load(server) {
 		socket.emit("system message", "Welcome to RP Navi!");
 		logger.debug(`Socket ${socket.id} connected`);
 
-		systemHandlers.setupHandlers(io, socket);
-		await setupSocketSession(io, socket);
+		systemHandlers.connectHandlers(io, socket);
+		connectHandlersSession(io, socket);
 	});
 
 	return io;
 }
 
-const chatHandlers = require("../socket-io/chat-socket");
-const dmHandlers = require("../socket-io/dm-handlers");
-const userHandlers = require("../socket-io/user-socket");
+const chatHandlers = require("../socket-io/chat-room");
+const dmHandlers = require("../socket-io/direct-message");
+const userHandlers = require("../socket-io/account");
+const characterHandlers = require("../socket-io/character");
 
 const userService = require("../services/redis/user-service");
-const { getCharacterList } = require("../services/mongodb/character-service");
 
-async function setupSocketSession(io, socket) {
+async function connectHandlersSession(io, socket) {
 	const session = socket.request.session;
 	if ("userId" in session == false) {
 		socket.emit("login error", {});
 		return;
 	}
 
-	const userId = session.userId;
+	await userService.setUserConnection(session.userId, socket.id);
+	characterHandlers.connectHandlers(io, socket);
+	// userHandlers.connectHandlers(io, socket);
+	// dmHandlers.connectHandlers(io, socket);
+	chatHandlers.connectHandlers(io, socket);
 
-	let characterList = await getCharacterList(userId);
-	socket.emit("character list", characterList);
+	socket.on("disconnect", async () => {
+		const socketId = await userService.getUserConnection(session.userId);
 
-	userHandlers.setupSocket(io, socket);
-	dmHandlers.setupSocket(io, socket);
-	chatHandlers.setupSocket(io, socket);
-
-	socket.on("disconnect", () => {
 		logger.debug(`Socket ${socket.id} disconnected`);
+		if (socketId == socket.id) {
+			chatHandlers.removeInRooms(io, socket);
+		} else {
+			logger.debug(`Other connection is done`);
+		}
 	});
 }
 

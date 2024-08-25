@@ -1,30 +1,6 @@
-const { verifyUserOwnsCharacter, getCharacterOwner } = require(`../services/redis/character-service`);
-const { getCharacterData } = require(`../services/mongodb/character-service`);
+const { getCharacterOwner } = require(`../services/redis/character-service`);
 const { logger, formatJson } = require(`../utils/logger`);
 const { SocketIoResponse } = require(`../classes/socket-io-response`);
-
-function setupSocket(io, socket) {
-	const userId = socket.request.session.userId;
-	socket.join(`pms/${userId}`);
-
-	socket.on(`send dm`, (data, ack) =>
-		main_handler(socket, data, handle_sendDm)
-			.then((status) => ack(status))
-			.catch((err) => {
-				logger.info(`Error sending a DM: ${err}`);
-				ack({ success: false, msg: `` });
-			})
-	);
-
-	socket.on(`send dm-status`, (data, ack) =>
-		main_handler(socket, data, handle_sendDmStatus)
-			.then((status) => ack(status))
-			.catch((err) => {
-				logger.info(`Error sending DM status: ${err}`);
-				ack({ success: false, msg: `` });
-			})
-	);
-}
 
 async function checkCharactersExist(fromCharacter, toCharacter) {
 	const requesterData = await getCharacterData(fromCharacter);
@@ -36,7 +12,7 @@ async function checkCharactersExist(fromCharacter, toCharacter) {
 	}
 }
 
-async function main_handler(socket, data, eventHandler) {
+async function mainHandler(socket, data, eventHandler) {
 	let status = new SocketIoResponse();
 	const fromCharacter = data.fromCharacter;
 	const toCharacter = data.toCharacter;
@@ -75,6 +51,26 @@ async function handle_sendDmStatus(socket, data, toUserId) {
 	socket.to(`pms/${toUserId}`).emit(`dm status`, data);
 }
 
+function connectHandlers(server, socket) {
+	socket.on(`send dm`, (data, ack) =>
+		mainHandler(socket, data, handle_sendDm)
+			.then((status) => ack(status))
+			.catch((err) => {
+				logger.info(`Error sending a DM: ${err}`);
+				ack({ success: false, msg: `` });
+			})
+	);
+
+	socket.on(`send dm-status`, (data, ack) =>
+		mainHandler(socket, data, handle_sendDmStatus)
+			.then((status) => ack(status))
+			.catch((err) => {
+				logger.info(`Error sending DM status: ${err}`);
+				ack({ success: false, msg: `` });
+			})
+	);
+}
+
 module.exports = {
-	setupSocket,
+	connectHandlers,
 };

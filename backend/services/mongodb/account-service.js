@@ -45,6 +45,11 @@ async function accountExists(email) {
 	return await model.exists({ email: email });
 }
 
+async function accountExistsById(accountId) {
+	const docId = ObjectId(accountId);
+	return await model.exists({ _id: docId });
+}
+
 /**
  * Gets account data based based on the account ID, email, or both. Both arguments are optional,
  * however a default query is used to make sure that if executed without filling in either
@@ -96,7 +101,7 @@ async function authenticateUser(password, email = null, sessionToken = null) {
  * @param {*} newEmail New email address
  * @returns An object from the DB indicating the result of the update operation
  *
- * @note Calling this should be preceeded by an email verification and authentication check.
+ * @note Calling this should be preceeded by an authentication check.
  */
 async function updateEmail(accountId, newEmail) {
 	logger.info(`${accountId} is updating their email to ${newEmail}`);
@@ -176,6 +181,7 @@ async function setAccountState(email = null) {}
 module.exports = {
 	createAccount,
 	accountExists,
+	accountExistsById,
 
 	getAccountData,
 
