@@ -4,19 +4,6 @@ const nodemailer = require("nodemailer");
 const VERIFY_URL_BASE = "http://localhost:3000/account/verify-account";
 const RESET_URL_BASE = "http://localhost:3000/account/reset-password";
 
-function sendMail(from, to, subject, text) {
-	transporter = nodemailer.createTransport(
-		smtpTransport({
-			host: "debugmail.io",
-			port: 25,
-			auth: {
-				user: process.env.MAILER_ADDR,
-				pass: process.env.MAILER_PW,
-			},
-		})
-	);
-}
-
 async function sendTestMail(sendTo = "bar@example.com") {
 	// Generate test SMTP service account from ethereal.email
 	// Only needed if you don't have a real mail account for testing

@@ -16,7 +16,7 @@ async function createCharacter(req, res) {
 		return;
 	}
 
-	const characterData = await characterService.createCharacter(body.characterName, req.session.userId);
+	const characterData = await characterService.createCharacter(body.characterName, req.session.userID);
 	if (characterData !== null) {
 		response = new AjaxResponse("info", "", { success: true });
 	} else {
@@ -31,7 +31,7 @@ async function getCharacterList(req, res) {
 		res.json(response);
 		return;
 	}
-	const characterList = await characterService.getCharacterList(req.session.userId);
+	const characterList = await characterService.getCharacterList(req.session.userID);
 	response = new AjaxResponse("info", "", characterList);
 	res.json(response);
 }
@@ -77,7 +77,7 @@ async function getProfileEditor(req, res) {
 	}
 
 	const characterName = req.query.character;
-	const ownerId = req.session.userId;
+	const ownerId = req.session.userID;
 	const characterData = await characterService.getCharacterData(characterName);
 	if (characterData === null) {
 		response = new AjaxResponse("error", "A character with this name does not exist", {});
@@ -116,7 +116,7 @@ async function updateProfile(req, res) {
 	}
 
 	const characterName = body.name;
-	const userId = session.userId;
+	const userId = session.userID;
 	const profileData = {
 		profileHtml: body.html || "",
 		profileCss: body.css || "",
@@ -135,7 +135,7 @@ async function updateProfile(req, res) {
 
 async function deleteCharacter(req, res) {
 	const characterName = req.body.name;
-	const userId = req.session.userId;
+	const userId = req.session.userID;
 	let response = verifyNoReqErrors(req, res);
 	if (response !== null) {
 		res.json(response);

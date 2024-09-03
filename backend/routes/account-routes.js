@@ -3,38 +3,42 @@
  *
  */
 const router = require("express").Router();
-const { check, query } = require("express-validator");
+const { check, query, oneOf } = require("express-validator");
 
 const {
-	createAccount,
-	getAccountPage,
-	getAccountData,
-	logoutAccount,
-	loginAccount,
-	updateEmail,
+	CreateAccount,
+	GetAccountPage,
+	GetAccountData,
+	LogoutAccount,
+	LoginAccount,
+	UpdateEmail,
 
-	updatePassword,
-	requestPasswordReset,
-	verifyPasswordReset,
-	updatePasswordReset,
+	UpdatePassword,
+	RequestPasswordReset,
+	VerifyPasswordReset,
+	UpdatePasswordFromReset,
 
-	verifyAccount,
-	resendVerification,
-	deleteAccount,
+	VerifyAccount,
+	ResendVerification,
+	DeleteAccount,
 } = require("../controllers/account-controller");
 
 const basepath = "/account";
 
 /* GET routers ***************************************************************/
-router.get("/", getAccountPage);
+router.get("/", GetAccountPage);
 
-router.get("/data", getAccountData);
+router.get("/data", GetAccountData);
 
-router.get("/resendVerify", resendVerification);
+router.get("/resendVerify", ResendVerification);
 
-router.get("/verify", [query("token").notEmpty().withMessage("Nothing to verify here...")], verifyAccount);
+router.get("/verify", [query("token").notEmpty()], VerifyAccount);
 
-router.get("/reset-password", [query("token").notEmpty()], verifyPasswordReset);
+router.get(
+	"/reset-password",
+	oneOf(query("token").notEmpty(), query("accountID").notEmpty()),
+	VerifyPasswordReset
+);
 
 /* POST routers **************************************************************/
 router.post(
@@ -48,10 +52,10 @@ router.post(
 			.withMessage("Invalid email address format"),
 		check("password", "Password must be at least 8 characters in length").isLength({ min: 8 }),
 	],
-	createAccount
+	CreateAccount
 );
 
-router.post("/logout", logoutAccount);
+router.post("/logout", LogoutAccount);
 
 router.post(
 	"/login",
@@ -64,7 +68,7 @@ router.post(
 			.withMessage("Invalid email address format"),
 		check("password", "No password entered").notEmpty(),
 	],
-	loginAccount
+	LoginAccount
 );
 
 router.post(
@@ -73,7 +77,7 @@ router.post(
 		check("password", "No password entered").notEmpty(),
 		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
 	],
-	updatePassword
+	UpdatePassword
 );
 
 router.post(
@@ -87,7 +91,7 @@ router.post(
 			.withMessage("Invalid email address format"),
 		check("password", "No password entered").notEmpty(),
 	],
-	updateEmail
+	UpdateEmail
 );
 
 router.post(
@@ -100,7 +104,7 @@ router.post(
 			.normalizeEmail()
 			.withMessage("Invalid email address format"),
 	],
-	requestPasswordReset
+	RequestPasswordReset
 );
 
 router.post(
@@ -109,10 +113,10 @@ router.post(
 		check("newPassword", "No password entered").notEmpty(),
 		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
 	],
-	updatePasswordReset
+	UpdatePasswordFromReset
 );
 
-router.post("/delete", [check("password", "No password entered").notEmpty()], deleteAccount);
+router.post("/delete", [check("password", "No password entered").notEmpty()], DeleteAccount);
 
 module.exports = {
 	router,

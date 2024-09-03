@@ -3,7 +3,7 @@
  *
  */
 const router = require("express").Router();
-const { check, query } = require("express-validator");
+const { check } = require("express-validator");
 const { PageRenderParams } = require("../classes/page-render-params");
 
 const {

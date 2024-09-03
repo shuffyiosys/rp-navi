@@ -14,7 +14,7 @@ async function connectHandlers(io, socket) {
 
 async function handle_sendStatus(io, socket, data) {
 	logger.debug(`Handling update status: ${formatJson(data)}`);
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const ownsCharacter = await verifyUserOwnsCharacter(userId, data.character);
 	if (ownsCharacter == true) {
 		io.emit(`user status update`, data);
@@ -32,7 +32,7 @@ async function main_handler(socket, data, serviceHandler) {
 		return status;
 	}
 
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const ownsCharacter = await verifyUserOwnsCharacter(userId, data.requester);
 	if (ownsCharacter == true) {
 		const relationshipData = await serviceHandler(requesterData._id, recipientData._id);

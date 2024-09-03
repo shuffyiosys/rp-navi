@@ -4,7 +4,7 @@ const characterMongoDb = require(`../services/mongodb/character-service`);
 const characterRedisDb = require(`../services/redis/character-service`);
 
 async function handleGetOwnedCharacters(socket, data) {
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const characterList = await characterMongoDb.getCharacterList(userId);
 	socket.emit("character list", characterList);
 

@@ -72,24 +72,24 @@ function runTest() {
 async function test_signup() {
 	const req = new RequestMock(accountData);
 	const res = new ResponseMock();
-	await controller.createAccount(req, res);
+	await controller.CreateAccount(req, res);
 	expect(res.jsonData.type).to.equal("info");
 	expect("data" in res.jsonData).to.equal(true);
-	accountData.id = req.session.userId;
+	accountData.id = req.session.userID;
 }
 
 async function test_login() {
 	const req = new RequestMock(accountData);
 	const res = new ResponseMock();
-	await controller.loginAccount(req, res);
+	await controller.LoginAccount(req, res);
 	expect(res.jsonData.type).to.equal("info");
-	expect(req.session.userId).to.equal(accountData.id);
+	expect(req.session.userID).to.equal(accountData.id);
 }
 
 async function test_getData() {
 	const req = new RequestMock({}, {}, { userId: accountData.id });
 	const res = new ResponseMock();
-	await controller.getAccountData(req, res);
+	await controller.GetAccountDataByID(req, res);
 	expect(res.jsonData.type).to.equal("info");
 	expect(res.jsonData.data.email).to.equal(accountData.email);
 }
@@ -101,7 +101,7 @@ async function test_updateEmail() {
 		{ userId: accountData.id }
 	);
 	const res = new ResponseMock();
-	await controller.updateEmail(req, res);
+	await controller.UpdateEmail(req, res);
 	expect(res.jsonData.type).to.equal("info");
 	expect(res.jsonData.data.modifiedCount).to.equal(1);
 }
@@ -113,8 +113,8 @@ async function test_updatePassword() {
 		{ userId: accountData.id }
 	);
 	const res = new ResponseMock();
-	await controller.getAccountData(req, res);
-	await controller.updatePassword(req, res);
+	await controller.GetAccountDataByID(req, res);
+	await controller.UpdatePassword(req, res);
 	expect(res.jsonData.type).to.equal("info");
 	expect(res.jsonData.data.modifiedCount).to.equal(1);
 }
@@ -122,9 +122,9 @@ async function test_updatePassword() {
 async function test_loginWithUpdates() {
 	const req = new RequestMock({ email: accountData.newEmail, password: accountData.newPassword });
 	const res = new ResponseMock();
-	await controller.loginAccount(req, res);
+	await controller.LoginAccount(req, res);
 	expect(res.jsonData.type).to.equal("info");
-	expect(req.session.userId).to.equal(accountData.id);
+	expect(req.session.userID).to.equal(accountData.id);
 }
 
 /**
@@ -139,7 +139,7 @@ async function test_loginWithUpdates() {
 async function test_signupFailure() {
 	const req = new RequestMock({ email: accountData.newEmail, password: accountData.password });
 	const res = new ResponseMock();
-	await controller.createAccount(req, res);
+	await controller.CreateAccount(req, res);
 	expect(res.jsonData.type).to.equal("error");
 	expect("data" in res.jsonData).to.equal(false);
 }
@@ -147,14 +147,14 @@ async function test_signupFailure() {
 async function test_loginAccountFailure() {
 	const req = new RequestMock({ email: "nobody@no.com", password: accountData.password });
 	const res = new ResponseMock();
-	await controller.loginAccount(req, res);
+	await controller.LoginAccount(req, res);
 	expect(res.jsonData.type).to.equal("error");
 }
 
 async function test_getDataFailure() {
 	const req = new RequestMock({}, {}, {});
 	const res = new ResponseMock();
-	await controller.getAccountData(req, res);
+	await controller.GetAccountDataByID(req, res);
 	expect(res.jsonData.type).to.equal("error");
 	expect("data" in res.jsonData).to.equal(false);
 }
@@ -162,14 +162,14 @@ async function test_getDataFailure() {
 async function test_loginPwFailure() {
 	const req = new RequestMock({ email: accountData.email, password: "000000" });
 	const res = new ResponseMock();
-	await controller.loginAccount(req, res);
+	await controller.LoginAccount(req, res);
 	expect(res.jsonData.type).to.equal("error");
 }
 
 async function test_updateTakenEmailFailure() {
 	const req = new RequestMock(accountData, {}, { userId: accountData.id });
 	const res = new ResponseMock();
-	await controller.updateEmail(req, res);
+	await controller.UpdateEmail(req, res);
 	expect(res.jsonData.type).to.equal("error");
 }
 
@@ -180,15 +180,15 @@ async function test_updatedEmailFailure() {
 		{ userId: accountData.id }
 	);
 	const res = new ResponseMock();
-	await controller.updateEmail(req, res);
+	await controller.UpdateEmail(req, res);
 	expect(res.jsonData.type).to.equal("info");
 }
 
 async function test_updatePasswordFailure() {
 	const req = new RequestMock(accountData, {}, { userId: accountData.id });
 	const res = new ResponseMock();
-	await controller.getAccountData(req, res);
-	await controller.updatePassword(req, res);
+	await controller.GetAccountDataByID(req, res);
+	await controller.UpdatePassword(req, res);
 	expect(res.jsonData.type).to.equal("info");
 	expect(res.jsonData.data.modifiedCount).to.equal(0);
 }
@@ -203,7 +203,7 @@ async function test_delete() {
 		{ userId: accountData.id }
 	);
 	const res = new ResponseMock();
-	await controller.deleteAccount(req, res);
+	await controller.DeleteAccount(req, res);
 	expect(res.jsonData.data.deletedCount).to.equal(1);
 }
 

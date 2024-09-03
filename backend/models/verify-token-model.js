@@ -1,20 +1,19 @@
 /**
- * @file Defines the database schema for verification tokens
+ * Defines the database schema for verification tokens
  */
-const mongoose = require("mongoose");
+const { Schema, model } = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
-
-const Schema = mongoose.Schema;
 
 /** Database schema for verification tokens
  * @property {String} token - "Unique" string generated as the token ID
  * @property {Number} action - Which action this token is performing
- * @property {ObjectId} referenceId - The ID this token is meant for
+ * @property {ObjectId} referenceID - The ID this token is meant for
  */
-let VerifyTokenSchema = new mongoose.Schema(
+let VerifyTokenSchema = new Schema(
 	{
 		token: {
 			type: String,
+			unique: true,
 			required: true,
 		},
 
@@ -23,7 +22,7 @@ let VerifyTokenSchema = new mongoose.Schema(
 			required: true,
 		},
 
-		referenceId: {
+		referenceID: {
 			type: String,
 			required: true,
 		},
@@ -35,4 +34,4 @@ let VerifyTokenSchema = new mongoose.Schema(
 );
 
 VerifyTokenSchema.index({ createdAt: 1 }, { expireAfterSeconds: 600 });
-mongoose.model(MODEL_NAMES.VERIFY_TOKENS, VerifyTokenSchema);
+model(MODEL_NAMES.VERIFY_TOKENS, VerifyTokenSchema);

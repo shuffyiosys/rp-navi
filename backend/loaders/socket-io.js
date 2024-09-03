@@ -31,14 +31,14 @@ async function connectHandlersSession(io, socket) {
 		return;
 	}
 
-	await userService.setUserConnection(session.userId, socket.id);
+	await userService.setUserConnection(session.userID, socket.id);
 	characterHandlers.connectHandlers(io, socket);
 	// userHandlers.connectHandlers(io, socket);
 	// dmHandlers.connectHandlers(io, socket);
 	chatHandlers.connectHandlers(io, socket);
 
 	socket.on("disconnect", async () => {
-		const socketId = await userService.getUserConnection(session.userId);
+		const socketId = await userService.getUserConnection(session.userID);
 
 		logger.debug(`Socket ${socket.id} disconnected`);
 		if (socketId == socket.id) {

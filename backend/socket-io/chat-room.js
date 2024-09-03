@@ -39,7 +39,7 @@ async function verifyCommonParameters(socket, data) {
 		response.msg = "Missing parameters";
 	}
 
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const characterOwner = await characterService.getCharacterOwner(data.characterName);
 	const roomExists = await chatService.checkRoomExists(data.roomName);
 	if (characterOwner != userId) {
@@ -65,7 +65,7 @@ async function handleCreateRoom(socket, data) {
 	if (!("characterOwner" in data) || !("roomName" in data)) {
 		response.msg = "Missing parameters";
 	}
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const roomExists = await chatService.checkRoomExists(data.roomName);
 	const characterOwner = await characterService.getCharacterOwner(data.characterName);
 
@@ -174,7 +174,7 @@ async function handleGetRoomInfo(socket, data) {
 	let isMod = false;
 	if ("characterName" in data) {
 		const characterOwner = await characterService.getCharacterOwner(data.characterName);
-		const userId = socket.request.session.userId;
+		const userId = socket.request.session.userID;
 
 		if (characterOwner == userId) {
 			isMod = await chatService.isMod(data.roomName, data.characterName);
@@ -332,7 +332,7 @@ async function connectHandlers(server, socket) {
 }
 
 async function removeInRooms(server, socket) {
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const characterList = await characterMongoDb.getCharacterList(userId);
 	logger.debug(`Removing in rooms for ${userId}`);
 

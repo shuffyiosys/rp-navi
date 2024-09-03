@@ -72,7 +72,7 @@ document.getElementById("getVerification").onclick = () => {
 	sendAjaxGet(`/account/resendVerify`);
 };
 
-document.getElementById("updateEmail").onclick = () => {
+document.getElementById("UpdateEmail").onclick = () => {
 	const data = {
 		newEmail: getInputValue("#newEmailInput"),
 		password: getInputValue("#passwordInput"),

@@ -1,13 +1,9 @@
 /**
- * Defines the database schema for user account data
- * @file models/account-model.js
+ * Defines the schema for user groups
  */
 const { Schema, model } = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 
-/**
- * Database schema for groups
- */
 let GroupSchema = new Schema(
 	{
 		name: {

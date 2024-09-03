@@ -10,7 +10,7 @@ function sendAjaxPost(data, url, callback = callbackStub) {
 	xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
 	xhr.onload = function () {
 		if (xhr.status == 200) {
-			callback(JSON.parse(this.response));
+			callback(this.response);
 		}
 	};
 

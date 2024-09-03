@@ -3,372 +3,341 @@
  * @brief Handles the input requests and outgoing responses for account related functionality
  */
 const { validationResult } = require(`express-validator`);
-
-const config = require(`../config/config`)();
 const accountService = require(`../services/mongodb/account-service`);
 const verifyService = require(`../services/mongodb/verify-token-service`);
 const mailer = require(`../utils/mailer`);
-const { AjaxResponse } = require(`../classes/ajax-response`);
-const { VERIFY_ACTION } = require(`../data/verify-token-data`);
 const { logger, formatJson } = require(`../utils/logger`);
-const { verifyNoReqErrors } = require(`../utils/controller-utils`);
-const { PERMISSION_LEVELS } = require(`../data/account-data`);
-const { PageRenderParams } = require("../classes/page-render-params");
-const { error } = require("winston");
-
-/**
- * @brief Creates a session to mark the user has logged in.
- *
- * If there's already a session, this function returns immediately as doing this again seems to
- * clobber any existing session.
- */
-function createSession(req, accountId) {
-	req.session.userId = accountId;
-	req.session.save();
-}
-
-/**
- * @brief Destroys the session
- * @param {object} req Request data from client
- * @param {ojbect} res Response object to client
- */
-function destroySession(req, res) {
-	req.session.destroy((err) => {
-		if (err) {
-			logger.error(err);
-		}
-		res.status(200);
-	});
-}
+const { AjaxResponse } = require(`../classes/ajax-response`);
+const { PageRenderParams } = require(`../classes/page-render-params`);
+const { AUTHENTICATION_RESULT, ACCOUNT_STATE } = require(`../data/account-data`);
 
 /**
  * Handles creating an account requests
- * @param {*} req Request data from client
- * @param {*} res Response object to client
  *
  * CLIENT -> POST request containing an email and passowrd
  * SERVER <- On error: Either what's missing (failed verification) or the account exists
  *           On Success: Create a session ~~and redirect~~
  */
-async function createAccount(req, res) {
-	console.log(req);
+async function CreateAccount(req, res) {
 	const errors = validationResult(req);
-	const body = req.body;
-
-	if (errors.isEmpty() === false) {
-		response = new AjaxResponse("error", "Errors with input", errors.array());
-		res.json(response);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
 		return;
-	}
-	else if (await accountService.accountExists(body.email)) {
+	} else if (await accountService.GetAccountExists(req.body.email)) {
+		const ip = (req.headers["x-forwarded-for"] || req.connection.remoteAddress || "")
+			.split(",")[0]
+			.trim();
+		logger.info(`${ip} tried creating an account with already used email ${req.body.email} `);
 		res.json({
 			type: `error`,
 			msg: `An account with this email address exists`,
 		});
-		logger.info(`${body.email} was being used to create another account`);
 		return;
 	}
 
-	const accountData = await accountService.createAccount(body.email, body.password);
+	const accountData = await accountService.CreateAccount(req.body.email, req.body.password);
 	if (accountData !== null) {
-		createSession(req, accountData.id);
-		const tokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, accountData.id);
-
-		// Send verification mail based on environment.
-		// If prod, send actual mail, if development, send a test mail over ethereal
-		if (config.environment === `production`) {
-			// Send mail here
-		} else if (config.environment === `development`) {
-			mailer.sendVerifyMail(body.email, body.email, tokenData.token);
-		}
-		res.json(new AjaxResponse(`info`, `Account created`, {}));
-	}
-	else {
+		req.session.userID = accountData.id.toString();
+		req.session.save();
+		mailer.sendVerifyMail(req.body.email, req.body.email, accountData.emailVerifyKey);
+		res.json(new AjaxResponse(`success`, `Account created`, {}));
+	} else {
 		res.json(new AjaxResponse(`error`, `Error creating an account`, {}));
 	}
 }
 
-async function getAccountPage(req, res) {
-	if (`userId` in req.session === false) {
-		res.redirect("/");
-		return;
+async function GetAccountPage(req, res) {
+	if (!(`userID` in req.session)) {
+		res.redirect(`/`);
 	} else {
-		const accountData = await accountService.getAccountData(req.session.userId);
-		const pageData = new PageRenderParams(`Account page for ${accountData.email}`, accountData, res.locals);
-		res.render("account/index", pageData);
+		const accountData = await accountService.GetAccountDataByID(req.session.userID);
+		const pageData = new PageRenderParams(
+			`Account page for ${accountData.email}`,
+			accountData,
+			res.locals
+		);
+		res.render(`account/index`, pageData);
 	}
 }
 
-/**
- *
- * @param {*} req Request data from client
- * @param {*} res Response object to client
- */
-async function getAccountData(req, res) {
-	if (`userId` in req.session === false) {
-		res.json({ type: `error`, msg: `Not logged in` });
+async function GetAccountData(req, res) {
+	if (!(`userID` in req.session)) {
+		res.json(new AjaxResponse(`error`, `Not logged in`, {}));
 		return;
 	}
 
-	const accountData = await accountService.getAccountData(req.session.userId);
-	res.json(new AjaxResponse(`info`, ``, accountData));
+	const accountData = await accountService.GetAccountDataByID(req.session.userID);
+	res.json(new AjaxResponse(`success`, ``, accountData));
 }
 
-/**
- * Destroys the login session for the requesting client
- */
-async function logoutAccount(req, res) {
-	destroySession(req, res);
-	res.json(new AjaxResponse(`info`, `Logged out`));
+async function LogoutAccount(req, res) {
+	req.session.destroy((err) => {
+		if (err) {
+			logger.error(err);
+		}
+	});
+	console.log(`session destroyed`);
+	const pageData = new PageRenderParams("Home", { loggedIn: false }, res.locals);
+	res.render("index", pageData);
 }
 
-/**
- *
- * @param {*} req
- * @param {*} res
- */
-async function loginAccount(req, res) {
+async function LoginAccount(req, res) {
 	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
-		response = new AjaxResponse("error", "Errors with input", errors.array());
-		res.json(response);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
 		return;
-	} else if (`userId` in req.session === true) {
+	} else if (`userID` in req.session) {
 		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
 		return;
 	}
 
-	const body = req.body;
-	const accountData = await accountService.authenticateUser(body.password, body.email, null);
-	if (accountData && accountData.permission != PERMISSION_LEVELS.BANNED) {
-		createSession(req, accountData.id.toString());
-		res.json(new AjaxResponse(`info`, `Login successful`, {}));
+	const response = await accountService.AuthenticateUser(req.body.password, req.body.email, "email");
+	logger.debug(`User ${req.body.email} is logging in, result ${formatJson(response)}`);
+	if (response.status === AUTHENTICATION_RESULT.BANNED) {
+		res.json(new AjaxResponse(`error`, `User is banned`, {}));
+	} else if (response.status === AUTHENTICATION_RESULT.GENERAL_ERROR) {
+		res.json(new AjaxResponse(`error`, `Error with logging in`, {}));
+	} else if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
+		req.session.userID = response.id.toString();
+		req.session.save();
+		delete response.status;
+		res.json(response);
+	} else if (response.status === AUTHENTICATION_RESULT.NEED_NEW_PASSWORD) {
+		const pageData = new PageRenderParams(
+			`Reset password`,
+			{
+				canReset: true,
+				accountID: response.id.toString(),
+			},
+			res.locals
+		);
+		res.render(`account/reset-password`, pageData);
 	} else {
-		res.json(new AjaxResponse(`error`, `Login error`, {}));
+		logger.info(`General error with logging in: ${formatJson(response)}`);
+		res.json(new AjaxResponse(`error`, `Error with logging in`, {}));
 	}
 }
 
-/**
- *
- * @param {*} req
- * @param {*} res
- */
-async function updateEmail(req, res) {
-	const body = req.body;
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
-		res.json(response);
-		return;
-	} else if (await accountService.accountExists(body.newEmail)) {
-		res.json({
-			type: `error`,
-			msg: `An account with this email address exists`,
-		});
-		logger.info(`${body.email} was being used to create another account`);
-		return;
-	}
-	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	response = new AjaxResponse(`error`, `Email not updated`, { modifiedCount: 0 });
-	if (accountData) {
-		const updateData = await accountService.updateEmail(req.session.userId, body.newEmail);
-		response.data = updateData;
-		response.msg = JSON.stringify(updateData);
-		res.json(response);
-	} else {
-		res.json(response);
-	}
-}
-
-/** Passowrd management handlers ******************************************* */
-/**
- *
- * @param {*} req
- * @param {*} res
- */
-async function updatePassword(req, res) {
-	const errors = verifyNoReqErrors(req, res);
-	let response = new AjaxResponse(`error`, `Password not updated`, {});
-	if (errors !== null) {
-		response.data = errors;
-		res.json(response);
-		return;
-	}
-
-	const body = req.body;
-	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	if (accountData !== null) {
-		response.type = "info";
-		response.msg = "";
-	}
-	res.json(response);
-}
-
-async function requestPasswordReset(req, res) {
+/** Core update handlers ************************************************** */
+async function UpdateEmail(req, res) {
 	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
-		response = new AjaxResponse("error", "Errors with input", errors.array());
-		res.json(response);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
 		return;
-	} else if (`userId` in req.session === true) {
-		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
+	} else if (!(`userID` in req.session)) {
+		res.json(new AjaxResponse(`error`, `User is not logged in`, errors.array()));
 		return;
+	}
+
+	const emailInUse = await accountService.GetAccountExists(req.body.newEmail);
+	if (emailInUse) {
+		res.json(new AjaxResponse(`error`, `This email is already in use`, errors.array()));
+		return;
+	}
+
+	const response = await accountService.AuthenticateUser(req.body.password, req.session.usrID, "ID");
+	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
+		const updateData = await accountService.UpdateEmail(req.session.userID, req.body.newEmail);
+		res.json(new AjaxResponse(`success`, JSON.stringify(updateData), updateData));
 	} else {
-		response = new AjaxResponse(`info`, ``, {});
+		res.json(new AjaxResponse(`error`, `Email not updated`));
 	}
-
-	const body = req.body;
-	const accountData = await accountService.getAccountData(null, body.email);
-	if (accountData === null) {
-		res.json(response);
-		return;
-	}
-
-	const existingToken = await verifyService.getToken(null, VERIFY_ACTION.RESET_PASSWORD, accountData.id.toString());
-	if (existingToken) {
-		await verifyService.deleteToken(existingToken.token);
-	}
-
-	const resetPwToken = await verifyService.generateToken(VERIFY_ACTION.RESET_PASSWORD, accountData.id.toString());
-	if (resetPwToken) {
-		response = new AjaxResponse(`info`, {}, res.locals);
-	}
-	logger.debug(`Password reset link: /account/reset-password?token=${resetPwToken.token}`);
-	res.json(response);
 }
 
-async function verifyPasswordReset(req, res) {
+async function UpdatePassword(req, res) {
 	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		return;
+	} else if (!(`userID` in req.session)) {
+		res.json(new AjaxResponse(`error`, `User is not logged in`, errors.array()));
+		return;
+	}
+
+	const response = await accountService.AuthenticateUser(req.body.password, req.session.userID, "ID");
+	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
+		const updateData = await accountService.UpdatePassword(req.session.userID, req.body.newPassword);
+		res.json(new AjaxResponse(`success`, JSON.stringify(updateData), updateData));
+	} else {
+		res.json(new AjaxResponse(`error`, `Password not updated`));
+	}
+}
+
+/** Passowrd reset handlers *********************************************** */
+async function RequestPasswordReset(req, res) {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		return;
+	} else if (`userID` in req.session) {
 		res.redirect(`/`);
 	}
 
-	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
-	const pageData = new PageRenderParams(`Reset password`, { canReset: false }, res.locals);
-
-	if (resetToken) {
-		pageData.data.token = resetToken;
-		pageData.data.canReset = true;
+	const accountData = await accountService.GetAccountDataByEmail(req.body.email);
+	if (accountData === null) {
+		// If there's no account with the email, stop here and don't mention anything.
+		res.json(new AjaxResponse(`success`, ``, {}));
+		return;
 	}
-	res.render("account/reset-password", pageData);
+
+	// Might need to investigate later if relying on auto-deleting is good enough
+	const resetPwToken = await verifyService.GenerateToken(accountData.id.toString());
+	mailer.sendPwResetEmail(req.body.email, req.body.email, resetPwToken.token);
+	logger.debug(`Password reset link: /account/reset-password?token=${resetPwToken.token}`);
+	res.json(new AjaxResponse(`success`, ``, {}));
 }
 
-async function updatePasswordReset(req, res) {
+async function VerifyPasswordReset(req, res) {
 	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
+	if (!errors.isEmpty() || `userID` in req.session) {
+		res.redirect(`/`);
+		return;
+	}
+
+	const pageData = new PageRenderParams(`Reset password`, { canReset: false }, res.locals);
+	if ("token" in req.query) {
+		const resetToken = await verifyService.GetToken(req.query.token);
+		if (resetToken !== null) {
+			pageData.data.token = resetToken;
+			pageData.data.canReset = true;
+		}
+	} else if ("accountID" in req.query) {
+		const accountData = await accountService.GetAccountDataByID(req.query.accountID, null, "state");
+
+		if (accountData !== null && accountData.state == ACCOUNT_STATE.NEED_NEW_PASSOWRD) {
+			pageData.data.accountID = req.query.accountID;
+			pageData.data.canReset = true;
+		}
+	}
+	res.render(`account/reset-password`, pageData);
+}
+
+async function UpdatePasswordFromReset(req, res) {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
 		let response = new AjaxResponse(`error`, `Error with password input`, errors);
 		res.json(response);
 		return;
 	}
 
 	/** Make sure the reset token still exists, since it should expire */
-	const resetToken = await verifyService.getToken(req.query.token, VERIFY_ACTION.RESET_PASSWORD);
-	if (!resetToken) {
+	const resetToken = await verifyService.GetToken(req.query.token);
+	if (resetToken === null) {
 		res.json(new AjaxResponse(`error`, `Password reset request expired`, {}));
 		return;
 	}
 
-	await verifyService.deleteToken(req.query.token);
+	await verifyService.DeleteToken(req.query.token);
 	let response = new AjaxResponse(`error`, `Error with handling password reset`, {});
-	const updateData = await accountService.updatePassword(resetToken.referenceId, req.body.newPassword);
-	if (updateData.modifiedCount == 1) {
-		response.type = `info`;
+	const updateData = await accountService.UpdatePassword(resetToken.referenceID, req.body.newPassword);
+	if (updateData.modifiedCount === 1) {
+		response.type = `success`;
 		response.msg = `Password updated`;
 	}
 	res.json(response);
 }
 
 /** Verification handlers ****************************************************/
-
-/**
- *
- * @param {*} req
- * @param {*} res
- * @returns
- */
-async function verifyAccount(req, res) {
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
-		res.json(response);
+async function VerifyAccount(req, res) {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, "", errors));
 		return;
 	}
 
-	response = new AjaxResponse(`error`, `Could not verify email`, { verified: false });
-	const emailedVerified = await verifyService.verifyRequest(
-		req.query.token,
-		VERIFY_ACTION.VERIFY_EMAIL,
-		req.session.userId
-	);
-	if (emailedVerified == true) {
-		const updateData = await accountService.updateVerification(req.session.userId, true);
-		response = new AjaxResponse(`info`, `E-mail verified`, updateData);
+	const accountData = await accountService.GetAccountDataByID(req.session.userID, "_id emailVerifyKey");
+	if (accountData === null) {
+		res.json(new AjaxResponse(`error`, `Could not verify email address`, {}));
+		return;
+	} else if (accountData.emailVerifyKey === req.query.token) {
+		const updateData = await accountService.UpdateVerification(req.session.userID, true);
+
+		if (updateData.modifiedCount === 1) {
+			res.json(new AjaxResponse(`success`, `E-mail verified`, {}));
+		} else {
+			res.json(new AjaxResponse(`error`, `E-mail not verified`, {}));
+		}
 	}
-	res.json(response);
 }
 
-async function resendVerification(req, res) {
-	let response = verifyNoReqErrors(req, res);
-	if (response !== null) {
-		res.json(response);
+async function ResendVerification(req, res) {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Error with input`, errors));
 		return;
 	}
-	await verifyService.deleteToken(undefined, VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
-	const newTokenData = await verifyService.generateToken(VERIFY_ACTION.VERIFY_EMAIL, req.session.userId);
-	response = new AjaxResponse(`Error`, `No verification token found`, {});
-	if (newTokenData) {
-		response = new AjaxResponse(
-			`info`,
-			`New email verification sent: <a href="account/verify?token=${newTokenData.token}">this link</a>`,
-			{ token: newTokenData.token }
+
+	const accountData = await accountService.GetAccountDataByID(req.session.userID, "_id emailVerifyKey");
+	if (accountData === null) {
+		res.json(new AjaxResponse(`Error`, `Account not found`, {}));
+	} else {
+		mailer.sendVerifyMail(req.body.email, req.body.email, accountData.emailVerifyKey);
+		res.json(
+			new AjaxResponse(
+				`success`,
+				`New email verification sent: <a href="account / verify ? token = ${accountData.emailVerifyKey}">this link</a>`,
+				{ token: accountData.emailVerifyKey }
+			)
 		);
 	}
-	res.json(response);
 }
 
-/**
- *
- * @param {*} req
- * @param {*} res
- */
-async function deleteAccount(req, res) {
+/** Delete handler **********************************************************/
+async function DeleteAccount(req, res) {
 	const errors = validationResult(req);
-	if (errors.isEmpty() === false) {
-		res.json(errors.array());
+	if (!errors.isEmpty()) {
+		res.json(new AjaxResponse(`error`, `Error with input`, errors));
 		return;
-	} else if (`userId` in req.session === false) {
+	} else if (!(`userID` in req.session)) {
 		res.json({ type: `error`, msg: `Not logged in` });
 		return;
 	}
 
-	const body = req.body;
-	const accountData = await accountService.authenticateUser(body.password, null, req.session.userId);
-	let response = new AjaxResponse(`info`, ``, { deletedCount: 0 });
-	if (accountData) {
-		const updateData = await accountService.deleteAccount(req.session.userId);
-		response.data = updateData;
-		response.msg = JSON.stringify(updateData);
-		res.json(response);
-		destroySession(req, res);
+	const authResponse = await accountService.AuthenticateUser(req.body.password, req.session.userID, "ID");
+	if (authResponse.status === AUTHENTICATION_RESULT.NEED_NEW_PASSWORD) {
+		const pageData = new PageRenderParams(
+			`Reset password`,
+			{
+				canReset: true,
+				accountID: authResponse.id.toString(),
+			},
+			res.locals
+		);
+		res.render(`account/reset-password`, pageData);
+		return;
+	} else if (authResponse.status !== AUTHENTICATION_RESULT.SUCCESS) {
+		res.json(new AjaxResponse(`error`, `There was a problem, try deleting again`, {}));
+	}
+
+	const updateData = await accountService.DeleteAccount(req.session.userID);
+	if (updateData.deletedCount === 1) {
+		res.json(new AjaxResponse(`success`, ``, {}));
+		req.session.destroy((err) => {
+			if (err) {
+				logger.error(err);
+			}
+			res.status(500);
+		});
 	} else {
-		res.json(response);
+		res.json(new AjaxResponse(`error`, `There was a problem deleting the account`, {}));
 	}
 }
 
 module.exports = {
-	createAccount,
-	getAccountPage,
-	getAccountData,
-	logoutAccount,
-	loginAccount,
+	CreateAccount,
+	GetAccountPage,
+	GetAccountData,
+	LogoutAccount,
+	LoginAccount,
 
-	updateEmail,
+	UpdateEmail,
+	UpdatePassword,
+	RequestPasswordReset,
+	VerifyPasswordReset,
+	UpdatePasswordFromReset,
 
-	updatePassword,
-	requestPasswordReset,
-	verifyPasswordReset,
-	updatePasswordReset,
+	VerifyAccount,
+	ResendVerification,
 
-	verifyAccount,
-	resendVerification,
-
-	deleteAccount,
+	DeleteAccount,
 };

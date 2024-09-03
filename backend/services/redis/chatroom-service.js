@@ -134,14 +134,14 @@ async function isPasswordNeeded(roomName) {
 	return roomPassword.length > 0;
 }
 
-async function verifyPassword(roomName, password) {
+async function VerifyPassword(roomName, password) {
 	const roomQuery = `room:${roomName}`;
 	const roomPassword = await redisClient.hget(roomQuery, "password");
 	return roomPassword == password;
 }
 
 /*****************************************************************************/
-async function setMods(roomName, modsData) {}
+async function setMods(roomName, modsData) { }
 
 async function addMod(roomName, characterId) {
 	const modsQuery = `room:${roomName}:mods`;
@@ -228,7 +228,7 @@ module.exports = {
 	clearInRoom,
 	checkInRoom,
 	isPasswordNeeded,
-	verifyPassword,
+	VerifyPassword,
 
 	/* Functions for modding */
 	setMods,

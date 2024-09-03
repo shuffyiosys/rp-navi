@@ -23,10 +23,10 @@ function checkNumberConnections(socket) {
 		connections[remoteIp] = 1;
 	} else if (connections[remoteIp] < 3) {
 		connections[remoteIp]++;
-		logger.info(`User ${session.userId} connected using socket ID ${socket.id}`);
+		logger.info(`User ${session.userID} connected using socket ID ${socket.id}`);
 		socket.emit(`connected`);
 	} else {
-		logger.info(`User ${session.userId} has too many connections`);
+		logger.info(`User ${session.userID} has too many connections`);
 		socket.disconnect();
 	}
 }

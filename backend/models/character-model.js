@@ -1,14 +1,11 @@
 /**
  * @file Defines the database schema for character data
  */
-const mongoose = require("mongoose");
+const { Schema, model } = require("mongoose");
 const { MODEL_NAMES } = require("./model-names");
 
-const Schema = mongoose.Schema;
-const ObjectId = Schema.ObjectId;
-
 /** Database schema for characters *******************************************/
-let characterSchema = new mongoose.Schema(
+let CharacterSchema = new Schema(
 	{
 		characterName: {
 			type: String,
@@ -17,7 +14,7 @@ let characterSchema = new mongoose.Schema(
 			index: true,
 		},
 
-		owner: ObjectId,
+		owner: Schema.ObjectId,
 
 		profileHtml: {
 			type: String,
@@ -41,12 +38,16 @@ let characterSchema = new mongoose.Schema(
 
 		friends: [
 			{
-				characterID: ObjectId,
-				type: Number
+				characterID: Schema.ObjectId,
+				friendState: Number
 			}
 		]
 	},
-	{ collation: { locale: "en_US", strength: 2 }, timestamps: true, autoIndex: false }
+	{
+		collation: { locale: "en_US", strength: 2 },
+		timestamps: true,
+		autoIndex: false
+	}
 );
 
-mongoose.model(MODEL_NAMES.CHARACTER, characterSchema);
+model(MODEL_NAMES.CHARACTER, CharacterSchema);

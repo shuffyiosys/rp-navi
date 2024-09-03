@@ -23,7 +23,7 @@ async function mainHandler(socket, data, eventHandler) {
 		return status;
 	}
 
-	const userId = socket.request.session.userId;
+	const userId = socket.request.session.userID;
 	const userOwnsCharacter = await verifyUserOwnsCharacter(userId, fromCharacter);
 	logger.debug(`${userId} owns ${fromCharacter}? ${userOwnsCharacter}`);
 	if (userOwnsCharacter == false) {

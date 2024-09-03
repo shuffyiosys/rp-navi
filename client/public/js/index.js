@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		}
 	}
 
-	function createAccount() {
+	function CreateAccount() {
 		let errors = false;
 		let label = document.getElementById("email-error");
 		let emailInput = document.getElementById("email-input");
@@ -79,7 +79,13 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 
 	let loginBtn = document.getElementById("login-btn");
 	let createAccountBtn = document.getElementById("create-account-btn");
+	let passwordInput = document.getElementById("password-input");
 
 	loginBtn.onclick = submitLogin;
-	createAccountBtn.onclick = createAccount;
+	createAccountBtn.onclick = CreateAccount;
+	passwordInput.onkeyup = (ev) => {
+		if (ev.key === "Enter") {
+			submitLogin();
+		}
+	};
 });

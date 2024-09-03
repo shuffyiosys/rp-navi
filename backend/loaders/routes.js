@@ -12,7 +12,7 @@ function load(app, routePath = "") {
 		const router = require(filepath);
 
 		try {
-			logger.debug(`Loading route ${router.basepath} from ${filepath}`);
+			logger.debug(`Loading route "${router.basepath}" from ${filepath}`);
 			app.use(`${router.basepath}`, router.router);
 		} catch (e) {
 			logger.error(`Error in using route file ${filepath}: ${e}`);
