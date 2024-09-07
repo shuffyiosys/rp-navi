@@ -18,7 +18,7 @@ async function createServers(app, config) {
 
 	/* Create HTTPS server */
 	if (config.TLS_CERT_FILENAME && config.TLS_KEY_FILENAME) {
-		servers.httpsServer = startHttpsServer(app, config);
+		servers = startHttpsServer(app, config);
 	}
 
 	return servers;
@@ -36,7 +36,7 @@ function startHttpsServer(app, config) {
 	const keyFileExists = fs.existsSync(keyFilename);
 	const certFileExists = fs.existsSync(certFilename);
 	if (keyFileExists === false || certFileExists === false) {
-		return server;
+		return servers;
 	}
 
 	let options = {
@@ -49,8 +49,8 @@ function startHttpsServer(app, config) {
 }
 
 function startServers(servers, config, type = "http") {
-	const httpServer = servers.httpServer;
-	const httpsServer = servers.httpsServer;
+	let httpServer = servers.httpServer;
+	let httpsServer = servers.httpsServer;
 
 	if (type == "https") {
 		const port = config.HTTPS_PORT;
