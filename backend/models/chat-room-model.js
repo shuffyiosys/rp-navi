@@ -13,6 +13,8 @@ let ChatRoomSchema = new Schema(
 			index: true,
 		},
 
+		description: String,
+
 		group: {
 			type: Schema.ObjectId,
 			required: true,
@@ -28,11 +30,11 @@ let ChatRoomSchema = new Schema(
 		private: {
 			type: Boolean,
 			default: false,
-		}
+		},
 	},
 	{
 		collation: { locale: "en_US", strength: 2 },
-		autoIndex: false
+		autoIndex: false,
 	}
 );
 

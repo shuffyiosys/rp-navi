@@ -10,6 +10,7 @@ const crypto = require(`../../utils/crypto`);
 const mongoose = require(`mongoose`);
 const ObjectId = mongoose.Types.ObjectId;
 const model = mongoose.model(MODEL_NAMES.ACCOUNT);
+const characterModel = mongoose.model(MODEL_NAMES.CHARACTER);
 
 /**
  * Creates an account using the email and password provided
@@ -161,6 +162,48 @@ async function UpdateVerification(accountID, verificationKey) {
 	return operationResult;
 }
 
+/** User blocking functions **************************************************/
+/**
+ *
+ * @param {*} accountID
+ * @param {*} characterID
+ * @returns
+ */
+async function AddBlockedUser(accountID, characterID) {
+	const docID = ObjectId(accountID);
+	let accountData = await model.findOne({ _id: docID });
+	let blockedUsers = new Set(accountData.blocked);
+	blockedUsers.add(characterID);
+	const updateResult = await model.updateOne({ _id: docID }, { blocked: Array.from(blockedUsers) });
+	return updateResult;
+}
+
+async function RemoveBlockedUser(accountID, characterID) {
+	const docID = ObjectId(accountID);
+	let accountData = await model.findOne({ _id: docID });
+	let blockedUsers = new Set(accountData.blocked);
+	blockedUsers.delete(characterID);
+	const updateResult = await model.updateOne({ _id: docID }, { blocked: Array.from(blockedUsers) });
+	return updateResult;
+}
+
+async function GetBlockedUsers(accountID) {
+	const docID = ObjectId(accountID);
+	let accountData = await model.findOne({ _id: docID });
+	let blockedUsers = new Set(accountData.blocked);
+
+	// Do some tidying up before sending the account their blocked list.
+	blockedUsers.forEach((characterID) => {
+		const characterDocID = ObjectId(characterID);
+		if (!characterModel.exists(characterDocID)) {
+			blockedUsers.delete(characterID);
+		}
+	});
+	const blockedUsersArray = Array.from(blockedUsers);
+	await model.updateOne({ _id: docID }, { blocked: blockedUsersArray });
+	return blockedUsersArray;
+}
+
 /**
  * Deletes the account
  * @param {String} accountID ID of the account to be deleted
@@ -214,6 +257,10 @@ module.exports = {
 	UpdateEmail,
 	UpdatePassword,
 	UpdateVerification,
+
+	AddBlockedUser,
+	RemoveBlockedUser,
+	GetBlockedUsers,
 
 	DeleteAccount,
 

@@ -3,7 +3,8 @@
  *
  */
 const router = require("express").Router();
-const { check, query, oneOf } = require("express-validator");
+const validators = require("../data/validators/account-validators");
+const { oneOf } = require("express-validator");
 
 const {
 	CreateAccount,
@@ -32,91 +33,27 @@ router.get("/data", GetAccountData);
 
 router.get("/resendVerify", ResendVerification);
 
-router.get("/verify", [query("token").notEmpty()], VerifyAccount);
+router.get("/verify", [validators.tokenQuery], VerifyAccount);
 
-router.get(
-	"/reset-password",
-	oneOf(query("token").notEmpty(), query("accountID").notEmpty()),
-	VerifyPasswordReset
-);
+router.get("/reset-password", oneOf(validators.tokenQuery, validators.accountIDQuery), VerifyPasswordReset);
 
 /* POST routers **************************************************************/
-router.post(
-	"/create",
-	[
-		check("email")
-			.notEmpty()
-			.withMessage("No email address entered")
-			.normalizeEmail()
-			.isEmail()
-			.withMessage("Invalid email address format"),
-		check("password", "Password must be at least 8 characters in length").isLength({ min: 8 }),
-	],
-	CreateAccount
-);
+
+router.post("/create", [validators.createEmail, validators.newPassword], CreateAccount);
 
 router.post("/logout", LogoutAccount);
 
-router.post(
-	"/login",
-	[
-		check("email")
-			.notEmpty()
-			.withMessage("No email address entered")
-			.normalizeEmail()
-			.isEmail()
-			.withMessage("Invalid email address format"),
-		check("password", "No password entered").notEmpty(),
-	],
-	LoginAccount
-);
+router.post("/login", [validators.email, validators.passwordEntry], LoginAccount);
 
-router.post(
-	"/update-password",
-	[
-		check("password", "No password entered").notEmpty(),
-		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
-	],
-	UpdatePassword
-);
+router.post("/update-password", [validators.passwordEntry, validators.newPassword], UpdatePassword);
 
-router.post(
-	"/update-email",
-	[
-		check("newEmail")
-			.notEmpty()
-			.withMessage("No email address entered")
-			.isEmail()
-			.normalizeEmail()
-			.withMessage("Invalid email address format"),
-		check("password", "No password entered").notEmpty(),
-	],
-	UpdateEmail
-);
+router.post("/update-email", [validators.email, validators.passwordEntry], UpdateEmail);
 
-router.post(
-	"/forgot-password",
-	[
-		check("email")
-			.notEmpty()
-			.withMessage("No email address entered")
-			.isEmail()
-			.normalizeEmail()
-			.withMessage("Invalid email address format"),
-	],
-	RequestPasswordReset
-);
+router.post("/forgot-password", [validators.email], RequestPasswordReset);
 
-router.post(
-	"/reset-password",
-	[
-		check("newPassword", "No password entered").notEmpty(),
-		check("newPassword", "New password must be at least 8 characters in length").isLength({ min: 8 }),
-	],
-	UpdatePasswordFromReset
-);
+router.post("/reset-password", [validators.newPassword], UpdatePasswordFromReset);
 
-router.post("/delete", [check("password", "No password entered").notEmpty()], DeleteAccount);
+router.post("/delete", [validators.passwordEntry], DeleteAccount);
 
 module.exports = {
 	router,

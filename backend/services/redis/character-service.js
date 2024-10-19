@@ -1,7 +1,7 @@
 const { logger, formatJson } = require("../../utils/logger");
 const { redisClient } = require("../../loaders/redis-db");
 
-async function createCharacterData(characterName) {
+async function CreateCharacterData(characterName) {
 	const key = `characterData:${characterName}`;
 	const doesExist = await redisClient.exists(key);
 
@@ -19,7 +19,7 @@ async function createCharacterData(characterName) {
 	return await redisClient.hgetall(key);
 }
 
-async function getCharacterdata(characterName) {
+async function GetCharacterData(characterName) {
 	return await redisClient.hgetall(`characterData:${characterName}`);
 }
 
@@ -70,8 +70,8 @@ async function removeRoomWithCharacter(characterName, roomName) {
 }
 
 module.exports = {
-	createCharacterData,
-	getCharacterdata,
+	CreateCharacterData,
+	GetCharacterData,
 
 	updateCharacterStatusType,
 	updateCharacterStatusMsg,

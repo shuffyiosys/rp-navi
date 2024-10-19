@@ -36,17 +36,15 @@ let CharacterSchema = new Schema(
 			default: false,
 		},
 
-		friends: [
-			{
-				characterID: Schema.ObjectId,
-				friendState: Number
-			}
-		]
+		friends: {
+			type: Map,
+			of: Number,
+		},
 	},
 	{
 		collation: { locale: "en_US", strength: 2 },
 		timestamps: true,
-		autoIndex: false
+		autoIndex: false,
 	}
 );
 

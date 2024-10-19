@@ -18,17 +18,16 @@ logger.info(`Config: ${formatJson(config)}`);
 const mongoose = require("mongoose");
 mongoose.Promise = global.Promise;
 
-const dbParameters = config.database.mongo;
 before(function () {
-	const MONGO_DB_URI = `mongodb://${dbParameters.url}:${dbParameters.port}`;
+	const MONGO_DB_URI = `mongodb://${config.MONGO_DB_IP}:${config.MONGO_DB_PORT}`;
 	let mongooseOptions = {
-		dbName: dbParameters.name,
-		user: dbParameters.username,
-		pass: dbParameters.password,
+		dbName: config.MONGO_DB_NAME,
+		user: config.MONGO_DB_USERNAME,
+		pass: config.MONGO_DB_PASSWORD,
 	};
 	mongoose.set("strictQuery", false);
 
-	if (dbParameters.username && dbParameters.password) {
+	if (config.MONGO_DB_USERNAME.length > 0 && config.MONGO_DB_PASSWORD.length > 0) {
 		mongooseOptions.authSource = "admin";
 	}
 
@@ -65,6 +64,14 @@ describe("RP Navi Controller Test", function () {
 	// describe("Accounts", () => require("./controllers/account-controller.test").runTest());
 	//describe("Characters", () => require("./controllers/character-controller.test").runTest());
 	// require("./socket-io/sanity.test").runTest();
+});
+
+describe("RP Navi Service Test", function () {
+	describe("Accounts", () => require("./services/account-service.test").runTest());
+	//describe("Characters", () => require("./controllers/character-controller.test").runTest());
+	// require("./socket-io/sanity.test").runTest();
+
+	describe("Accounts", () => require("./services/account-service.test").runCleanup());
 });
 
 /** Cleanup things so the testing framework can exit *************************/

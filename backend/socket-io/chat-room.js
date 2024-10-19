@@ -333,7 +333,7 @@ async function connectHandlers(server, socket) {
 
 async function removeInRooms(server, socket) {
 	const userId = socket.request.session.userID;
-	const characterList = await characterMongoDb.getCharacterList(userId);
+	const characterList = await characterMongoDb.GetCharacterList(userId);
 	logger.debug(`Removing in rooms for ${userId}`);
 
 	characterList.forEach(async (characterName) => {

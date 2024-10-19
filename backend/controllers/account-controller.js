@@ -76,7 +76,6 @@ async function LogoutAccount(req, res) {
 			logger.error(err);
 		}
 	});
-	console.log(`session destroyed`);
 	const pageData = new PageRenderParams("Home", { loggedIn: false }, res.locals);
 	res.render("index", pageData);
 }
@@ -100,8 +99,7 @@ async function LoginAccount(req, res) {
 	} else if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		req.session.userID = response.id.toString();
 		req.session.save();
-		delete response.status;
-		res.json(response);
+		res.json(new AjaxResponse(`success`, ``, {}));
 	} else if (response.status === AUTHENTICATION_RESULT.NEED_NEW_PASSWORD) {
 		const pageData = new PageRenderParams(
 			`Reset password`,

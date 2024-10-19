@@ -2,7 +2,7 @@
  * @file Handles connecting to, disconnecting, and basic statusing of a MongoDB
  * 			server.
  */
-const { logger, formatJson } = require("../utils/logger");
+const { logger } = require("../utils/logger");
 const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
@@ -32,8 +32,7 @@ async function setup(dbParameters) {
 	};
 	mongoose.set("strictQuery", false);
 
-	if (dbParameters.MONGO_DB_USERNAME.length > 0 &&
-		dbParameters.MONGO_DB_PASSWORD.length > 0) {
+	if (dbParameters.MONGO_DB_USERNAME.length > 0 && dbParameters.MONGO_DB_PASSWORD.length > 0) {
 		mongooseOptions.authSource = "admin";
 	}
 

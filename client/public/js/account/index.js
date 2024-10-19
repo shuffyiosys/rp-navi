@@ -47,7 +47,8 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 			document.getElementById("new-password-error").innerHTML = "Enter a new password";
 		}
 		if (data.newPassword.length < 8) {
-			document.getElementById("new-password-error").innerHTML = "New password must be at least 8 characters";
+			document.getElementById("new-password-error").innerHTML =
+				"New password must be at least 8 characters";
 		} else if (!data.password) {
 			passwordErr.classList.add("error-label");
 			document.getElementById("password-error").innerHTML = "Enter your password";
@@ -96,9 +97,9 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 			document.querySelector("#character-list").insertAdjacentHTML(appendType, characterRow.outerHTML);
 		}
 
-		const deleteCharacterBtn = document.querySelector(`#delete-${htmlName}`);
-		deleteCharacterBtn.onclick = () => {
-			handleDeleteBtn(deleteCharacterBtn, characterName);
+		const DeleteCharacterBtn = document.querySelector(`#delete-${htmlName}`);
+		DeleteCharacterBtn.onclick = () => {
+			handleDeleteBtn(DeleteCharacterBtn, characterName);
 		};
 	}
 
@@ -137,7 +138,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		}
 	}
 
-	function createCharacter() {
+	function CreateCharacter() {
 		let msg = document.getElementById("create-character-msg");
 		let nameInput = document.getElementById("new-character-input");
 
@@ -158,10 +159,10 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		}
 	}
 
-	document.getElementById("create-character-btn").onclick = createCharacter;
+	document.getElementById("create-character-btn").onclick = CreateCharacter;
 	document.getElementById("new-character-input").onkeydown = (ev) => {
 		if (ev.key == "Enter") {
-			createCharacter();
+			CreateCharacter();
 		}
 	};
 

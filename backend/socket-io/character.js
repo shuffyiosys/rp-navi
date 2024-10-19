@@ -5,7 +5,7 @@ const characterRedisDb = require(`../services/redis/character-service`);
 
 async function handleGetOwnedCharacters(socket, data) {
 	const userId = socket.request.session.userID;
-	const characterList = await characterMongoDb.getCharacterList(userId);
+	const characterList = await characterMongoDb.GetCharacterList(userId);
 	socket.emit("character list", characterList);
 
 	characterList.forEach((characterName) => {
@@ -14,7 +14,7 @@ async function handleGetOwnedCharacters(socket, data) {
 }
 
 async function handleGetCharacterData(socket, data) {
-	const characterData = await characterRedisDb.getCharacterdata(data.name);
+	const characterData = await characterRedisDb.GetCharacterData(data.name);
 	socket.emit("character data", characterData);
 }
 

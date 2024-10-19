@@ -1,6 +1,6 @@
 const { logger, formatJson } = require(`../utils/logger`);
 const { SocketIoResponse } = require(`../classes/socket-io-response`);
-const { getCharacterData } = require(`../services/mongodb/character-service`);
+const { GetCharacterData } = require(`../services/mongodb/character-service`);
 const { verifyUserOwnsCharacter } = require(`../services/redis/character-service`);
 
 async function connectHandlers(io, socket) {
@@ -24,8 +24,8 @@ async function handle_sendStatus(io, socket, data) {
 async function main_handler(socket, data, serviceHandler) {
 	let status = new SocketIoResponse();
 
-	const requesterData = await getCharacterData(data.requester);
-	const recipientData = await getCharacterData(data.recipient);
+	const requesterData = await GetCharacterData(data.requester);
+	const recipientData = await GetCharacterData(data.recipient);
 
 	if (requesterData == null || recipientData == null) {
 		status.msg = `One or both characters doesn't exist`;

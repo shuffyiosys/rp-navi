@@ -1,6 +1,41 @@
 "use strict";
 
 document.addEventListener("DOMContentLoaded", (arg) => {
+	async function generatePBKDF(email, password) {
+		let passphrase = new TextEncoder().encode(password);
+
+		// Subtle Crypto only works in HTTPS settings, so if it's not there,
+		// return a totally insecure Base64 concat as the password.
+		if (Object.keys(window.crypto).length === 0) {
+			console.log(btoa(password + email));
+			return btoa(password + email);
+		}
+
+		// Import passphrase
+		const importedKey = await window.crypto.subtle.importKey(
+			"raw",
+			passphrase,
+			{ name: "PBKDF2" },
+			false,
+			["deriveBits"]
+		);
+		const keyBits = await window.crypto.subtle.deriveBits(
+			{
+				name: "PBKDF2",
+				hash: "SHA-256",
+				salt: new TextEncoder().encode(email),
+				iterations: 10000,
+			},
+			importedKey,
+			256
+		);
+		console.log("raw key:", new Uint8Array(keyBits));
+		let base64 = btoa(
+			new Uint8Array(keyBits).reduce((data, byte) => data + String.fromCharCode(byte), "")
+		);
+		return base64;
+	}
+
 	function submitLogin() {
 		let errors = false;
 		let label = document.getElementById("email-error");
@@ -21,17 +56,21 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		label = document.getElementById("error-message");
 		label.innerHTML = "&#8203;";
 		if (!errors) {
-			const data = {
-				email: getInputValue("#email-input"),
-				password: getInputValue("#password-input"),
-			};
-			sendAjaxPost(data, "/account/login", (response) => {
-				if (response.type == "error") {
-					label.innerHTML = "Error logging in";
-				} else {
-					location.reload();
+			generatePBKDF(getInputValue("#email-input"), getInputValue("#password-input")).then(
+				(derivedPassword) => {
+					const data = {
+						email: getInputValue("#email-input"),
+						password: derivedPassword,
+					};
+					sendAjaxPost(data, "/account/login", (response) => {
+						if (response.type == "error") {
+							label.innerHTML = "Error logging in";
+						} else {
+							location.reload();
+						}
+					});
 				}
-			});
+			);
 		}
 	}
 
@@ -63,17 +102,21 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		label = document.getElementById("error-message");
 		label.innerHTML = "&#8203;";
 		if (!errors) {
-			const data = {
-				email: getInputValue("#email-input"),
-				password: getInputValue("#password-input"),
-			};
-			sendAjaxPost(data, "/account/create", (response) => {
-				if (response.type == "error") {
-					label.innerHTML = "Error logging in";
-				} else {
-					location.reload();
+			generatePBKDF(getInputValue("#email-input"), getInputValue("#password-input")).then(
+				(derivedPassword) => {
+					const data = {
+						email: getInputValue("#email-input"),
+						password: derivedPassword,
+					};
+					sendAjaxPost(data, "/account/create", (response) => {
+						if (response.type == "error") {
+							label.innerHTML = "Error creating account";
+						} else {
+							location.reload();
+						}
+					});
 				}
-			});
+			);
 		}
 	}
 

@@ -125,4 +125,5 @@ dist
 
 # Other project files and directories
 *.code-workspace
+*eslint*
 backend/node_modules

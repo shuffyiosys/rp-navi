@@ -7,24 +7,24 @@ const { check } = require("express-validator");
 const { PageRenderParams } = require("../classes/page-render-params");
 
 const {
-	createCharacter,
-	getCharacterList,
-	getCharacterProfile,
-	getProfileData,
-	getProfileEditor,
-	updateProfile,
-	deleteCharacter,
+	CreateCharacter,
+	GetCharacterList,
+	GetCharacterProfile,
+	GetProfileData,
+	GetProfileEditor,
+	UpdateProfile,
+	DeleteCharacter,
 } = require("../controllers/character-controller");
 
 const basepath = "/character";
 
 /* GET routers ***************************************************************/
 /* res.render responses */
-router.get("/profile", getCharacterProfile);
+router.get("/profile", GetCharacterProfile);
 
-router.get("/editor", getProfileEditor);
+router.get("/editor", GetProfileEditor);
 
-router.get("/editor-advanced", getProfileEditor);
+router.get("/editor-advanced", GetProfileEditor);
 
 router.get("/editor-help", (req, res) => {
 	const pageData = new PageRenderParams("Profile Editor Help", {}, res.locals);
@@ -32,16 +32,20 @@ router.get("/editor-help", (req, res) => {
 });
 
 /* res.json responses */
-router.get("/profile-data", getProfileData);
+router.get("/profile-data", GetProfileData);
 
-router.get("/list", getCharacterList);
+router.get("/list", GetCharacterList);
 
 /* POST routers **************************************************************/
-router.post("/create", [check("characterName").notEmpty().withMessage("No character name inputted")], createCharacter);
+router.post(
+	"/create",
+	[check("characterName").notEmpty().withMessage("No character name inputted")],
+	CreateCharacter
+);
 
-router.post("/update-profile", updateProfile);
+router.post("/update-profile", UpdateProfile);
 
-router.post("/delete", deleteCharacter);
+router.post("/delete", DeleteCharacter);
 
 module.exports = {
 	router,
