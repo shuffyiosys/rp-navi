@@ -8,16 +8,16 @@ const fs = require("fs");
 const path = require("path");
 
 /**
- * Sets up a MongoDB connection and registers the schemas.
+ * Sets up a MongoDB connection.
  * @param {Object} dbParameters - Contains the database connection parameters
  * 		<br>database. Connection requires the following data members
  * 		<br>ipAddress: IP address or URL to the database
  * 		<br>portNumber: Port that the DB is listening to
  * 		<br>dbName: Name of the database to use
  * 		<br>username: Username that the database uses to authenticate the
- * 			connection
+ * 		    connection
  * 		<br>password: Password that the database uses to authenticate the
- * 			connection
+ * 		    connection
  * @param {String[]} schemaFiles - Array of strings containing the paths to the
  * 		schema files.
  */
@@ -57,6 +57,10 @@ async function setup(dbParameters) {
 	return mongoose;
 }
 
+/**
+ * Reisters the database schemas with mongoose
+ * @param {String} modelPath Path where the schema files are located.
+ */
 function initModels(modelPath = "") {
 	if (modelPath == "") {
 		modelPath = path.join(__dirname, "..", "models");

@@ -2,8 +2,8 @@
  * @file
  */
 class AjaxResponse {
-	constructor(type = "error", msg = "", data = {}) {
-		this.type = type;
+	constructor(success = false, msg = "", data = {}) {
+		this.success = success;
 		this.msg = msg;
 		this.data = data;
 	}

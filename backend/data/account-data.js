@@ -22,8 +22,16 @@ const AUTHENTICATION_RESULT = Object.freeze({
 	SUCCESS: 3,
 });
 
+const FEEDBACK_MESSAGES = Object.freeze({
+	NO_EMAIL: "No username entered",
+	NO_PASSWORD: "No password entered",
+	USER_BANNED: "User is banned",
+	LOGIN_ERROR: "Error with logging in",
+});
+
 module.exports = {
 	ACCESS_LEVEL,
 	ACCOUNT_STATE,
 	AUTHENTICATION_RESULT,
+	FEEDBACK_MESSAGES,
 };

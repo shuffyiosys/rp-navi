@@ -42,6 +42,7 @@ let AccountSchema = new Schema(
 			type: String,
 		},
 
+		// TODO: Should probably change this to a map.
 		blocked: [Schema.ObjectId],
 	},
 	{ collation: { locale: "en_US", strength: 2 }, timestamps: true }

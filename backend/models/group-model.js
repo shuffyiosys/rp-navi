@@ -9,39 +9,46 @@ let GroupSchema = new Schema(
 		name: {
 			type: String,
 			unique: true,
-			required: true
+			required: true,
+			index: true,
 		},
 
+		// Map this to a character
 		owner: {
-			type: Schema.ObjectId,
-			required: true
+			type: String,
+			required: true,
 		},
 
-		moderators: [Schema.ObjectId],
+		members: {
+			type: Map,
+			of: Number,
+		},
 
-		members: [Schema.ObjectId],
-
-		chatRoom: [Schema.ObjectId],
-
-		profileHtml: {
+		pageHtml: {
 			type: String,
 			default: "",
 		},
 
-		profileCss: {
+		pageCss: {
 			type: String,
 			default: "",
 		},
 
-		profileJs: {
+		pageJs: {
 			type: String,
 			default: "",
 		},
 
+		// Room details
+		roomName: String,
+		description: String,
+		password: String,
+		privateRoom: { type: Boolean, default: false },
+		membersOnly: { type: Boolean, default: false },
 	},
 	{
 		collation: { locale: "en_US", strength: 2 },
-		timestamps: true
+		timestamps: true,
 	}
 );
 

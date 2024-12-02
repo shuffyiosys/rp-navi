@@ -21,31 +21,6 @@ async function handle_sendStatus(io, socket, data) {
 	}
 }
 
-async function main_handler(socket, data, serviceHandler) {
-	let status = new SocketIoResponse();
-
-	const requesterData = await GetCharacterData(data.requester);
-	const recipientData = await GetCharacterData(data.recipient);
-
-	if (requesterData == null || recipientData == null) {
-		status.msg = `One or both characters doesn't exist`;
-		return status;
-	}
-
-	const userId = socket.request.session.userID;
-	const ownsCharacter = await verifyUserOwnsCharacter(userId, data.requester);
-	if (ownsCharacter == true) {
-		const relationshipData = await serviceHandler(requesterData._id, recipientData._id);
-		logger.debug(`Relationship change data: ${formatJson(relationshipData)}`);
-		if (relationshipData !== null) {
-			status.success = true;
-		}
-	} else {
-		status.msg = `User does not own ${data.requester}`;
-	}
-	return status;
-}
-
 module.exports = {
 	connectHandlers,
 };

@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 	function handleAccountUpdateResponse(response) {
 		console.log(response);
 		let passwordErr = document.getElementById("password-error");
-		if (response.type == "error") {
+		if (!response.success) {
 			passwordErr.classList.add("error-label");
 			passwordErr.innerHTML = "Error updating account (wrong password?)";
 		} else {

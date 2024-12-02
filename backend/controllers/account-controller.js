@@ -21,7 +21,7 @@ const { AUTHENTICATION_RESULT, ACCOUNT_STATE } = require(`../data/account-data`)
 async function CreateAccount(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
 	} else if (await accountService.GetAccountExists(req.body.email)) {
 		const ip = (req.headers["x-forwarded-for"] || req.connection.remoteAddress || "")
@@ -40,9 +40,9 @@ async function CreateAccount(req, res) {
 		req.session.userID = accountData.id.toString();
 		req.session.save();
 		mailer.sendVerifyMail(req.body.email, req.body.email, accountData.emailVerifyKey);
-		res.json(new AjaxResponse(`success`, `Account created`, {}));
+		res.json(new AjaxResponse(true, `Account created`, {}));
 	} else {
-		res.json(new AjaxResponse(`error`, `Error creating an account`, {}));
+		res.json(new AjaxResponse(false, `Error creating an account`, {}));
 	}
 }
 
@@ -62,44 +62,51 @@ async function GetAccountPage(req, res) {
 
 async function GetAccountData(req, res) {
 	if (!(`userID` in req.session)) {
-		res.json(new AjaxResponse(`error`, `Not logged in`, {}));
+		res.json(new AjaxResponse(false, `Not logged in`, {}));
 		return;
 	}
 
 	const accountData = await accountService.GetAccountDataByID(req.session.userID);
-	res.json(new AjaxResponse(`success`, ``, accountData));
+	res.json(new AjaxResponse(true, ``, accountData));
 }
 
 async function LogoutAccount(req, res) {
+	console.log(req);
 	req.session.destroy((err) => {
 		if (err) {
 			logger.error(err);
 		}
 	});
-	const pageData = new PageRenderParams("Home", { loggedIn: false }, res.locals);
-	res.render("index", pageData);
+
+	if ("noRedirect" in req.body) {
+		res.json(new AjaxResponse(true, ``, {}));
+		return;
+	} else {
+		const pageData = new PageRenderParams("Home", { loggedIn: false }, res.locals);
+		res.render("index", pageData);
+	}
 }
 
 async function LoginAccount(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
 	} else if (`userID` in req.session) {
-		res.json(new AjaxResponse(`error`, `Already logged in`, {}));
+		res.json(new AjaxResponse(false, `Already logged in`, {}));
 		return;
 	}
 
 	const response = await accountService.AuthenticateUser(req.body.password, req.body.email, "email");
 	logger.debug(`User ${req.body.email} is logging in, result ${formatJson(response)}`);
 	if (response.status === AUTHENTICATION_RESULT.BANNED) {
-		res.json(new AjaxResponse(`error`, `User is banned`, {}));
+		res.json(new AjaxResponse(false, `User is banned`, {}));
 	} else if (response.status === AUTHENTICATION_RESULT.GENERAL_ERROR) {
-		res.json(new AjaxResponse(`error`, `Error with logging in`, {}));
+		res.json(new AjaxResponse(false, `Error with logging in`, {}));
 	} else if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		req.session.userID = response.id.toString();
 		req.session.save();
-		res.json(new AjaxResponse(`success`, ``, {}));
+		res.json(new AjaxResponse(true, ``, {}));
 	} else if (response.status === AUTHENTICATION_RESULT.NEED_NEW_PASSWORD) {
 		const pageData = new PageRenderParams(
 			`Reset password`,
@@ -112,7 +119,7 @@ async function LoginAccount(req, res) {
 		res.render(`account/reset-password`, pageData);
 	} else {
 		logger.info(`General error with logging in: ${formatJson(response)}`);
-		res.json(new AjaxResponse(`error`, `Error with logging in`, {}));
+		res.json(new AjaxResponse(false, `Error with logging in`, {}));
 	}
 }
 
@@ -120,44 +127,44 @@ async function LoginAccount(req, res) {
 async function UpdateEmail(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
 	} else if (!(`userID` in req.session)) {
-		res.json(new AjaxResponse(`error`, `User is not logged in`, errors.array()));
+		res.json(new AjaxResponse(false, `User is not logged in`, errors.array()));
 		return;
 	}
 
 	const emailInUse = await accountService.GetAccountExists(req.body.newEmail);
 	if (emailInUse) {
-		res.json(new AjaxResponse(`error`, `This email is already in use`, errors.array()));
+		res.json(new AjaxResponse(false, `This email is already in use`, errors.array()));
 		return;
 	}
 
 	const response = await accountService.AuthenticateUser(req.body.password, req.session.usrID, "ID");
 	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		const updateData = await accountService.UpdateEmail(req.session.userID, req.body.newEmail);
-		res.json(new AjaxResponse(`success`, JSON.stringify(updateData), updateData));
+		res.json(new AjaxResponse(true, JSON.stringify(updateData), updateData));
 	} else {
-		res.json(new AjaxResponse(`error`, `Email not updated`));
+		res.json(new AjaxResponse(false, `Email not updated`));
 	}
 }
 
 async function UpdatePassword(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
 	} else if (!(`userID` in req.session)) {
-		res.json(new AjaxResponse(`error`, `User is not logged in`, errors.array()));
+		res.json(new AjaxResponse(false, `User is not logged in`, errors.array()));
 		return;
 	}
 
 	const response = await accountService.AuthenticateUser(req.body.password, req.session.userID, "ID");
 	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		const updateData = await accountService.UpdatePassword(req.session.userID, req.body.newPassword);
-		res.json(new AjaxResponse(`success`, JSON.stringify(updateData), updateData));
+		res.json(new AjaxResponse(true, JSON.stringify(updateData), updateData));
 	} else {
-		res.json(new AjaxResponse(`error`, `Password not updated`));
+		res.json(new AjaxResponse(false, `Password not updated`));
 	}
 }
 
@@ -165,7 +172,7 @@ async function UpdatePassword(req, res) {
 async function RequestPasswordReset(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Errors with input`, errors.array()));
+		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
 	} else if (`userID` in req.session) {
 		res.redirect(`/`);
@@ -174,7 +181,7 @@ async function RequestPasswordReset(req, res) {
 	const accountData = await accountService.GetAccountDataByEmail(req.body.email);
 	if (accountData === null) {
 		// If there's no account with the email, stop here and don't mention anything.
-		res.json(new AjaxResponse(`success`, ``, {}));
+		res.json(new AjaxResponse(true, ``, {}));
 		return;
 	}
 
@@ -182,7 +189,7 @@ async function RequestPasswordReset(req, res) {
 	const resetPwToken = await verifyService.GenerateToken(accountData.id.toString());
 	mailer.sendPwResetEmail(req.body.email, req.body.email, resetPwToken.token);
 	logger.debug(`Password reset link: /account/reset-password?token=${resetPwToken.token}`);
-	res.json(new AjaxResponse(`success`, ``, {}));
+	res.json(new AjaxResponse(true, ``, {}));
 }
 
 async function VerifyPasswordReset(req, res) {
@@ -213,7 +220,7 @@ async function VerifyPasswordReset(req, res) {
 async function UpdatePasswordFromReset(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		let response = new AjaxResponse(`error`, `Error with password input`, errors);
+		let response = new AjaxResponse(false, `Error with password input`, errors);
 		res.json(response);
 		return;
 	}
@@ -221,15 +228,15 @@ async function UpdatePasswordFromReset(req, res) {
 	/** Make sure the reset token still exists, since it should expire */
 	const resetToken = await verifyService.GetToken(req.query.token);
 	if (resetToken === null) {
-		res.json(new AjaxResponse(`error`, `Password reset request expired`, {}));
+		res.json(new AjaxResponse(false, `Password reset request expired`, {}));
 		return;
 	}
 
 	await verifyService.DeleteToken(req.query.token);
-	let response = new AjaxResponse(`error`, `Error with handling password reset`, {});
+	let response = new AjaxResponse(false, `Error with handling password reset`, {});
 	const updateData = await accountService.UpdatePassword(resetToken.referenceID, req.body.newPassword);
 	if (updateData.modifiedCount === 1) {
-		response.type = `success`;
+		response.success = true;
 		response.msg = `Password updated`;
 	}
 	res.json(response);
@@ -239,21 +246,21 @@ async function UpdatePasswordFromReset(req, res) {
 async function VerifyAccount(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, "", errors));
+		res.json(new AjaxResponse(false, "", errors));
 		return;
 	}
 
 	const accountData = await accountService.GetAccountDataByID(req.session.userID, "_id emailVerifyKey");
 	if (accountData === null) {
-		res.json(new AjaxResponse(`error`, `Could not verify email address`, {}));
+		res.json(new AjaxResponse(false, `Could not verify email address`, {}));
 		return;
 	} else if (accountData.emailVerifyKey === req.query.token) {
 		const updateData = await accountService.UpdateVerification(req.session.userID, true);
 
 		if (updateData.modifiedCount === 1) {
-			res.json(new AjaxResponse(`success`, `E-mail verified`, {}));
+			res.json(new AjaxResponse(true, `E-mail verified`, {}));
 		} else {
-			res.json(new AjaxResponse(`error`, `E-mail not verified`, {}));
+			res.json(new AjaxResponse(false, `E-mail not verified`, {}));
 		}
 	}
 }
@@ -261,13 +268,13 @@ async function VerifyAccount(req, res) {
 async function ResendVerification(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Error with input`, errors));
+		res.json(new AjaxResponse(false, `Error with input`, errors));
 		return;
 	}
 
 	const accountData = await accountService.GetAccountDataByID(req.session.userID, "_id emailVerifyKey");
 	if (accountData === null) {
-		res.json(new AjaxResponse(`Error`, `Account not found`, {}));
+		res.json(new AjaxResponse(false, `Account not found`, {}));
 	} else {
 		mailer.sendVerifyMail(req.body.email, req.body.email, accountData.emailVerifyKey);
 		res.json(
@@ -284,7 +291,7 @@ async function ResendVerification(req, res) {
 async function DeleteAccount(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
-		res.json(new AjaxResponse(`error`, `Error with input`, errors));
+		res.json(new AjaxResponse(false, `Error with input`, errors));
 		return;
 	} else if (!(`userID` in req.session)) {
 		res.json({ type: `error`, msg: `Not logged in` });
@@ -304,12 +311,12 @@ async function DeleteAccount(req, res) {
 		res.render(`account/reset-password`, pageData);
 		return;
 	} else if (authResponse.status !== AUTHENTICATION_RESULT.SUCCESS) {
-		res.json(new AjaxResponse(`error`, `There was a problem, try deleting again`, {}));
+		res.json(new AjaxResponse(false, `There was a problem, try deleting again`, {}));
 	}
 
 	const updateData = await accountService.DeleteAccount(req.session.userID);
 	if (updateData.deletedCount === 1) {
-		res.json(new AjaxResponse(`success`, ``, {}));
+		res.json(new AjaxResponse(true, ``, {}));
 		req.session.destroy((err) => {
 			if (err) {
 				logger.error(err);
@@ -317,7 +324,7 @@ async function DeleteAccount(req, res) {
 			res.status(500);
 		});
 	} else {
-		res.json(new AjaxResponse(`error`, `There was a problem deleting the account`, {}));
+		res.json(new AjaxResponse(false, `There was a problem deleting the account`, {}));
 	}
 }
 

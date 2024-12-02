@@ -1,6 +1,6 @@
 "use strict";
-const socket = io();
 
+const socket = io();
 function defaultHandler(response) {
 	console.log(response);
 }

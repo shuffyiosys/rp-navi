@@ -3,7 +3,7 @@
 document.addEventListener("DOMContentLoaded", (arg) => {
 	function submitResponse(response) {
 		console.log(response);
-		if (response.type == "error") {
+		if (!response.success) {
 			updateStatusMessage(response.data[0].msg, true);
 		} else {
 			console.log(response);

@@ -69,6 +69,11 @@ async function GetCharacterProfile(characterName) {
 	);
 }
 
+async function CheckOwnership(accountID, characterName) {
+	const ownerID = ObjectId(accountID);
+	return model.exists({ owner: ownerID, characterName: characterName });
+}
+
 async function GetCharacterData(accountID, characterName) {
 	const ownerID = ObjectId(accountID);
 	return model.findOne({ owner: ownerID, characterName: characterName });
@@ -205,6 +210,7 @@ module.exports = {
 	GetCharacterList,
 	GetCharacterCount,
 	GetCharacterProfile,
+	CheckOwnership,
 	GetCharacterData,
 
 	UpdateProfile,

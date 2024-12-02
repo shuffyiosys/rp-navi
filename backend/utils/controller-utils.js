@@ -20,7 +20,7 @@ function verifyNoReqErrors(req) {
 	let response = null;
 	if (errors.isEmpty() === false) {
 		response = new AjaxResponse("error", "Errors with input", errors.array());
-	} else if ("userId" in req.session === false) {
+	} else if ("userID" in req.session === false) {
 		response = new AjaxResponse("error", "Not logged in", {});
 	}
 	return response;

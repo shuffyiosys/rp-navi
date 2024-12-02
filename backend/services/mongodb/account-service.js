@@ -83,18 +83,18 @@ async function AuthenticateUser(password, identification, type) {
 	logger.debug(`Authenticating user ${identification}, ${type}`);
 	let accountData = null;
 	const fields = `_id password status accessLevel`;
+	const response = { id: -1, status: AUTHENTICATION_RESULT.GENERAL_ERROR };
+
 	if (type == "ID") {
 		const docID = ObjectId(identification);
 		accountData = await model.findOne({ _id: docID }, fields);
 	} else if (type == "email") {
 		accountData = await model.findOne({ email: identification }, fields);
 	} else {
-		return null;
+		return response;
 	}
 
 	logger.debug(`${formatJson(accountData)}`);
-	const response = { id: -1, status: AUTHENTICATION_RESULT.GENERAL_ERROR };
-
 	if (accountData === null) {
 		return response;
 	} else if (accountData.accessLevel === ACCESS_LEVEL.BANNED) {
@@ -171,7 +171,7 @@ async function UpdateVerification(accountID, verificationKey) {
  */
 async function AddBlockedUser(accountID, characterID) {
 	const docID = ObjectId(accountID);
-	let accountData = await model.findOne({ _id: docID });
+	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 	blockedUsers.add(characterID);
 	const updateResult = await model.updateOne({ _id: docID }, { blocked: Array.from(blockedUsers) });
@@ -180,7 +180,7 @@ async function AddBlockedUser(accountID, characterID) {
 
 async function RemoveBlockedUser(accountID, characterID) {
 	const docID = ObjectId(accountID);
-	let accountData = await model.findOne({ _id: docID });
+	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 	blockedUsers.delete(characterID);
 	const updateResult = await model.updateOne({ _id: docID }, { blocked: Array.from(blockedUsers) });
@@ -189,7 +189,7 @@ async function RemoveBlockedUser(accountID, characterID) {
 
 async function GetBlockedUsers(accountID) {
 	const docID = ObjectId(accountID);
-	let accountData = await model.findOne({ _id: docID });
+	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 
 	// Do some tidying up before sending the account their blocked list.

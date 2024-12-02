@@ -128,7 +128,7 @@ While this project doesn't aim to have MISRA-C or NASA's Power of Ten levels of 
 
 -   **Consider DRY judiciously**
 
-    If things are being done in the same exact manner with the same parameters, then maybe consider DRY.
+    Repeating yourself once is fine. Repeating yourself twice might need consideration. Repeating yourself thrice would make it likely this is good, but remember: the _same_ things must be done.
 
 -   **End all statements with a semicolon**
 
@@ -136,7 +136,7 @@ While this project doesn't aim to have MISRA-C or NASA's Power of Ten levels of 
 
 -   **Sort function parameters either by order of use or alphabetically**
 
-    One helps support sayin when the parameter will be used in the function. The other is a convenient sorting method.
+    One helps support saying when the parameter will be used in the function. The other is a convenient sorting method.
 
 -   **Prefer function flow of error checking, then success logic**
 
@@ -165,3 +165,7 @@ These are just here to remind me of the separation of concerns with the architec
 -   **Use double quotes `"`**
 
     If something requires quotes to identify something, use double quotes.
+
+-   **On avoiding jQuery**
+
+    Check [You Might Not Need jQuery](https://youmightnotneedjquery.com/) for examples. The main reason to avoid it is it's one less thing to depend on.

@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", (arg) => {
 	async function generatePBKDF(email, password) {
+		console.log("Creating PBKDF");
 		let passphrase = new TextEncoder().encode(password);
 
 		// Subtle Crypto only works in HTTPS settings, so if it's not there,
@@ -63,7 +64,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 						password: derivedPassword,
 					};
 					sendAjaxPost(data, "/account/login", (response) => {
-						if (response.type == "error") {
+						if (!response.success) {
 							label.innerHTML = "Error logging in";
 						} else {
 							location.reload();
@@ -109,7 +110,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 						password: derivedPassword,
 					};
 					sendAjaxPost(data, "/account/create", (response) => {
-						if (response.type == "error") {
+						if (!response.success) {
 							label.innerHTML = "Error creating account";
 						} else {
 							location.reload();
