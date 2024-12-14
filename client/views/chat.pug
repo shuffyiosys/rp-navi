@@ -1,9 +1,80 @@
 doctype html
-html
+html(style="height:100%")
 	head
 		title="RP Navi Chat"
+		//- Third party stuff first
 		script(src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous")
+		link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous")
+		script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous")
+
+		link(rel="stylesheet" href="/css/chat/chat-ui.css")
+		script(src="/js/chat/chat-ui.js" defer)
 		script(src="/js/chat/chat-client.js" defer)
 		script(src="/js/chat/sio-handlers.js" defer)
-	body
-		p Do some testing in the console!
+
+	body(style="height:100%")
+		div#page-header.text-white
+			h1 RP Navi Chat Test Page
+		div.container-fluid(style="height: calc(100vh - 64px); overflow: hidden")
+			div.row(style="height:100%")
+				div#left-navbar.col-sm-3.p-3.text-white
+					h3 Account
+					div.input-group
+						span.input-group-text Email address
+						input#login-email-input.form-control(type="email")
+					br
+					div.input-group
+						span.input-group-text Password
+						input#login-password-input.form-control(type="password")
+					br
+					div.btn-group(style="width:100%")
+						button#login-submit-btn.btn.btn-light(onclick="LoginBtnHandler()") Login
+						button#logout-btn.btn.btn-danger(onclick="LogoutBtnHandler()") Logout
+						button#create-account-btn.btn.btn-secondary(onclick="SignupBtnHandler()") Sign Up
+					hr
+					//- Character creation/removal
+					h3 Characters
+					div.input-group
+						span.input-group-text Name
+						input#character-name-input.form-control(type="text")
+						button#create-character-btn.btn.btn-primary(onclick="CreateCharacterBtnHandler()") Create
+					br
+					div.form-floating.input-group
+						select#character-select.form-select
+						label(for="room-tab-character-select") Perform action as...
+						button#delete-character-btn.btn.btn-danger(onclick="DeleteCharacterBtnHandler()") Delete
+					hr
+					//- Private messaging
+					h3 Private Messages
+					div.input-group
+						span.input-group-text User
+						input#new-pm-name-input.form-control(type="text")
+						button#new-pm-btn.btn.btn-light(onclick="NewPMBtnHandler()") Start PM
+					br
+					//- Room selection
+					h3 Room "Tabs"
+					div.form-floating.input-group
+						select#room-select.form-select(onchange="RoomSelectHandler()")
+							option#console-page(value="system-msgs") Console
+						label(for="room-select") Room
+						button#leave-room-btn.btn.btn-light(onclick="LeaveRoomBtnHandler()" disabled) Leave
+					hr
+					//- Room creation
+					h3 Room listing
+					div.form-floating.input-group
+						select#room-list-select.form-select
+						label(for="room-list-select") Room list
+						button#join-room-btn.btn.btn-light(onclick="JoinRoomBtnHandler()") Join
+					br
+					p Create room
+					div.input-group
+						span.input-group-text Room name
+						input#new-roomname-input.form-control(type="text")
+						button#create-room-btn.btn.btn-light(onclick="CreateRoomBtnHandler()") Create
+					br
+
+				div#chat-page.col-sm-9.p-3.bg-dark.text-white(style="height: 100%;")
+					div#chat-messages
+						div#system-msgs-page.msg-page(selected="yes")
+					div#chat-input-container
+						textarea#chat-input(style="width: 100%")

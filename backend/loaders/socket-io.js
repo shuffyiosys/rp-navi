@@ -7,11 +7,13 @@ function load(server) {
 	let io = new Server(server, { cors: { origin: "*" } });
 
 	io.on("connection", async function (socket) {
-		socket.emit("system message", "Welcome to RP Navi!");
-		logger.debug(`Socket ${socket.id} connected`);
-
-		systemHandlers.connectHandlers(io, socket);
-		connectHandlersSession(io, socket);
+		if ("userID" in socket.request.session) {
+			connectHandlersSession(io, socket);
+		} else {
+			socket.on("logged in", () => {
+				connectHandlersSession(io, socket);
+			});
+		}
 	});
 
 	return io;
@@ -26,26 +28,22 @@ const userService = require("../services/redis/user-service");
 
 async function connectHandlersSession(io, socket) {
 	const session = socket.request.session;
-	if ("userId" in session == false) {
-		socket.emit("login error", {});
-		return;
-	}
+	socket.emit("system message", "Welcome to RP Navi!");
+	socket.emit("login status", { loggedIn: "userID" in session });
+	logger.debug(`Socket ${socket.id} connected`);
 
+	// Check connections
 	await userService.setUserConnection(session.userID, socket.id);
+
 	characterHandlers.connectHandlers(io, socket);
 	// userHandlers.connectHandlers(io, socket);
 	// dmHandlers.connectHandlers(io, socket);
 	chatHandlers.connectHandlers(io, socket);
 
+	// Handle disconnect
 	socket.on("disconnect", async () => {
-		const socketId = await userService.getUserConnection(session.userID);
-
+		chatHandlers.removeInRooms(io, socket);
 		logger.debug(`Socket ${socket.id} disconnected`);
-		if (socketId == socket.id) {
-			chatHandlers.removeInRooms(io, socket);
-		} else {
-			logger.debug(`Other connection is done`);
-		}
 	});
 }
 

@@ -1,11 +1,11 @@
 const { logger, formatJson } = require(`../utils/logger`);
-const { SocketIoResponse } = require(`../classes/socket-io-response`);
+const { AjaxResponse } = require(`../classes/ajax-response`);
 const { getMD5 } = require(`../utils/crypto`);
 
 const chatService = require(`../services/redis/chatroom-service`);
 const userService = require("../services/redis/user-service");
+const characterRedisService = require(`../services/redis/character-service`);
 const characterMongoDb = require(`../services/mongodb/character-service`);
-const characterService = require(`../services/redis/character-service`);
 
 /* Signals definitions. Listed here since some IDEs will mark unused variables. */
 const ROOM_MSG_SIG = "room message posted";
@@ -33,16 +33,16 @@ const BANNED_SIG = "banned";
  * @returns
  */
 async function verifyCommonParameters(socket, data) {
-	let response = new SocketIoResponse();
+	let response = new AjaxResponse();
 
 	if (!("characterName" in data) || !("roomName" in data)) {
 		response.msg = "Missing parameters";
 	}
 
 	const userId = socket.request.session.userID;
-	const characterOwner = await characterService.getCharacterOwner(data.characterName);
+	const ownsCharacter = await VerifyCharacterOwnership(data.characterName, userId);
 	const roomExists = await chatService.checkRoomExists(data.roomName);
-	if (characterOwner != userId) {
+	if (!ownsCharacter) {
 		response.msg = `User does not own ${data.characterName}`;
 	} else if (!roomExists) {
 		response.msg = `Room ${data.roomName} is not available.`;
@@ -50,6 +50,18 @@ async function verifyCommonParameters(socket, data) {
 		response.success = true;
 	}
 	return response;
+}
+
+async function VerifyCharacterOwnership(characterName, userID) {
+	let characterOwner = await characterRedisService.getCharacterOwner(characterName);
+	let ownsCharacter = false;
+	if (characterOwner === null) {
+		characterOwner = await characterMongoDb.CheckOwnership(userID, characterName);
+		characterRedisService.addCharacterOwner(characterName, characterOwner);
+	}
+	ownsCharacter = characterOwner === null ? false : characterOwner;
+	logger.debug(`${userID} owns ${characterName}? ${ownsCharacter}`);
+	return ownsCharacter;
 }
 
 /** Socket IO handlers *******************************************************/
@@ -61,31 +73,24 @@ async function verifyCommonParameters(socket, data) {
  */
 async function handleCreateRoom(socket, data) {
 	logger.debug(`Handling create room ${formatJson(data)}`);
-	let response = new SocketIoResponse();
-	if (!("characterOwner" in data) || !("roomName" in data)) {
+	let response = new AjaxResponse();
+	if (!("characterName" in data) || !("roomName" in data)) {
 		response.msg = "Missing parameters";
 	}
-	const userId = socket.request.session.userID;
 	const roomExists = await chatService.checkRoomExists(data.roomName);
-	const characterOwner = await characterService.getCharacterOwner(data.characterName);
+	const ownsCharacter = await VerifyCharacterOwnership(data.characterName, socket.request.session.userID);
 
 	if (roomExists == 1) {
 		response.msg = `Room already exists`;
-	} else if (characterOwner != userId) {
-		response.msg = `User does not own ${data.data.characterName}`;
+	} else if (!ownsCharacter) {
+		response.msg = `User does not own ${data.characterName}`;
 	} else {
 		response.success = true;
 		await chatService.createRoom(data);
 		await chatService.addMod(data.roomName, data.characterName);
 		await chatService.addInRoom(data.roomName, data.characterName);
 		socket.join(data.roomName);
-
-		let newRoomAnnouncement = new SocketIoResponse();
-		newRoomAnnouncement.success = true;
-		newRoomAnnouncement.data = {
-			roomName: data.roomName,
-		};
-		socket.emit(ROOM_ADDED_SIG, newRoomAnnouncement);
+		socket.broadcast.emit(ROOM_ADDED_SIG, { roomName: data.roomName });
 	}
 	return response;
 }
@@ -97,7 +102,7 @@ async function handleJoinRoom(socket, data) {
 	if (!response.success) {
 		return response;
 	}
-
+	response.success = false; // Reset this
 	const isBanned = await chatService.checkIfBanned(data.roomName, data.characterName);
 	if (isBanned == 1) {
 		response.msg = `You are banned from ${data.roomName}`;
@@ -109,9 +114,11 @@ async function handleJoinRoom(socket, data) {
 		response.msg = `Character is already in room`;
 	} else {
 		response.success = true;
-		characterService.addCharacterInRoom(data.characterName, data.roomName);
+		characterRedisService.addCharacterInRoom(data.characterName, data.roomName);
 		socket.join(data.roomName);
-		socket.to(data.roomName).emit(USER_JOINED_SIG, { characterName: data.characterName });
+		socket
+			.to(data.roomName)
+			.emit(USER_JOINED_SIG, { roomName: data.roomName, characterName: data.characterName });
 	}
 	return response;
 }
@@ -131,7 +138,7 @@ async function handleLeaveRoom(server, socket, data) {
 	}
 
 	response.success = true;
-	await characterService.removeRoomWithCharacter(data.characterName, data.roomName);
+	await characterRedisService.removeRoomWithCharacter(data.characterName, data.roomName);
 	socket.leave(data.roomName);
 
 	let userList = await chatService.getUsersInRoom(data.roomName);
@@ -139,7 +146,9 @@ async function handleLeaveRoom(server, socket, data) {
 		chatService.removeRoom(data.roomName);
 		server.emit(ROOM_REMOVED_SIG, { roomName: data.roomName });
 	} else {
-		socket.to(data.roomName).emit(USER_LEFT_SIG, { characterName: data.characterName });
+		socket
+			.to(data.roomName)
+			.emit(USER_LEFT_SIG, { roomName: data.roomName, characterName: data.characterName });
 	}
 	return response;
 }
@@ -153,10 +162,8 @@ async function handlePostMessage(socket, data) {
 	}
 
 	let userInRoom = await chatService.checkInRoom(data.roomName, data.characterName);
+	logger.debug(`${data.characterName} in ${data.roomName}? ${userInRoom == 1}`);
 	if (userInRoom == 1) {
-		let hash = getMD5(data.characterName);
-		response.msgid = `${Date.now()}-${hash}`;
-		response.success = true;
 		socket.to(data.roomName).emit(ROOM_MSG_SIG, data);
 	}
 	return response;
@@ -164,7 +171,7 @@ async function handlePostMessage(socket, data) {
 
 async function handleGetRoomInfo(socket, data) {
 	logger.debug(`handleGetRoomInfo: ${formatJson(data)}`);
-	let response = new SocketIoResponse();
+	let response = new AjaxResponse();
 
 	if (!("roomName" in data)) {
 		response.msg = "Missing room name";
@@ -173,10 +180,9 @@ async function handleGetRoomInfo(socket, data) {
 
 	let isMod = false;
 	if ("characterName" in data) {
-		const characterOwner = await characterService.getCharacterOwner(data.characterName);
-		const userId = socket.request.session.userID;
+		const ownsCharacter = await characterRedisService.getCharacterOwner(data.characterName);
 
-		if (characterOwner == userId) {
+		if (!ownsCharacter) {
 			isMod = await chatService.isMod(data.roomName, data.characterName);
 		}
 	}
@@ -221,7 +227,7 @@ async function handleModAction(server, socket, data) {
 
 	logger.debug(`Performing mod action: ${formatJson(modActionData)}`);
 	if (action == `kick`) {
-		const targetUserId = await characterService.getCharacterOwner(data.targetName);
+		const targetUserId = await characterRedisService.getCharacterOwner(data.targetName);
 		const socketTarget = await userService.getUserConnection(targetUserId);
 		const removeResult = await chatService.removeInRoom(data.roomName, data.targetName);
 		if (removeResult > 0) {
@@ -233,7 +239,7 @@ async function handleModAction(server, socket, data) {
 		await chatService.removeInRoom(data.roomName, data.targetName);
 		await chatService.addBanned(data.roomName, data.targetName);
 
-		const targetUserId = await characterService.getCharacterOwner(data.targetName);
+		const targetUserId = await characterRedisService.getCharacterOwner(data.targetName);
 		const socketTarget = await userService.getUserConnection(targetUserId);
 		socket.to(data.roomName).emit(USER_BANNED_SIG, modActionData);
 		server.to(socketTarget).emit(BANNED_SIG, data.reasonMsg);
@@ -280,7 +286,7 @@ async function handleSetRoomSettings(socket, data) {
 
 async function broadcastRoomUpdate(socket, data) {
 	const roomData = await chatService.getRoomData(data.roomName, false);
-	let updateAnnouncement = new SocketIoResponse();
+	let updateAnnouncement = new AjaxResponse();
 	updateAnnouncement.success = true;
 	updateAnnouncement.data = roomData;
 	socket.to(data.roomName).emit(ROOM_UPDATE_SIG, updateAnnouncement);
@@ -337,7 +343,7 @@ async function removeInRooms(server, socket) {
 	logger.debug(`Removing in rooms for ${userId}`);
 
 	characterList.forEach(async (characterName) => {
-		let charactersInRooms = await characterService.getRoomsWithCharacter(characterName);
+		let charactersInRooms = await characterRedisService.getRoomsWithCharacter(characterName);
 		charactersInRooms.forEach((roomName) => {
 			logger.debug(`Removing ${characterName} from ${roomName}`);
 			let data = {

@@ -1,4 +1,5 @@
 "use strict";
+
 /**
  * @description This file handles all the AJAX related functionality.
  */
@@ -9,7 +10,6 @@ async function GeneratePBKDF(email, password) {
 	// Subtle Crypto only works in HTTPS settings, so if it's not there,
 	// return a totally insecure Base64 concat as the password.
 	if (Object.keys(window.crypto).length === 0) {
-		console.log(btoa(password + email));
 		return btoa(password + email);
 	}
 
@@ -31,7 +31,7 @@ async function GeneratePBKDF(email, password) {
 	return base64;
 }
 
-function PostAJAX(postURL, bodyData, callback) {
+async function PostAJAX(postURL, bodyData) {
 	const headerData = {
 		method: "post",
 		headers: {
@@ -44,43 +44,21 @@ function PostAJAX(postURL, bodyData, callback) {
 	if (bodyData !== null) {
 		headerData.body = JSON.stringify(bodyData);
 	}
-	fetch(postURL, headerData)
-		.then((response) => {
-			return response.json();
-		})
-		.then((response) => {
-			if (typeof callback == "function") {
-				callback(response);
-			} else {
-				console.log(response.json());
-			}
-		})
-		.catch((error) => {
-			console.log(error);
-		});
+
+	const response = await fetch(postURL, headerData);
+	return response.json();
 }
 
-function GetAJAX(postURL, callback) {
-	fetch(postURL, {
+async function GetAJAX(getURL) {
+	const headerData = {
 		method: "get",
 		headers: {
 			Accept: "application/json",
 			"Content-Type": "application/json",
 		},
-	})
-		.then((response) => {
-			return response.json();
-		})
-		.then((response) => {
-			if (typeof callback == "function") {
-				callback(response);
-			} else {
-				console.log(response.json());
-			}
-		})
-		.catch((error) => {
-			console.log(error);
-		});
+	};
+	const response = await fetch(getURL, headerData);
+	return response.json();
 }
 
 function SubmitLogin(username, password) {
@@ -89,9 +67,18 @@ function SubmitLogin(username, password) {
 			email: username,
 			password: derivedPassword,
 		};
-		PostAJAX("/account/login", data, (response) => {
-			console.log(response);
-		});
+		PostAJAX("/account/login", data)
+			.then((response) => {
+				if (response.success) {
+					response.msg = "Login successful";
+					socket.emit("logged in");
+					GetCharacters();
+				}
+				UpdateConsole(response.msg, LOG_LEVEL.DEBUG);
+			})
+			.catch((error) => {
+				console.log(`Error logging in:`, error);
+			});
 	});
 }
 
@@ -101,27 +88,61 @@ function CreateAccount(username, password) {
 			email: username,
 			password: derivedPassword,
 		};
-		PostAJAX("/account/create", data, (response) => {
-			console.log(response);
-		});
+		PostAJAX("/account/create", data)
+			.then((response) => {
+				UpdateConsole(response.msg, LOG_LEVEL.DEBUG);
+			})
+			.catch((error) => {
+				console.log(`Error logging in:`, error);
+			});
 	});
 }
 
 function LogOut() {
-	PostAJAX("/account/logout", { noRedirect: true }, (response) => {
-		console.log(response);
-	});
+	PostAJAX("/account/logout", { noRedirect: true })
+		.then((response) => {
+			response.msg = "Logged out";
+			UpdateConsole(response, LOG_LEVEL.DEBUG);
+		})
+		.catch((error) => {
+			console.log(`Error logging in:`, error);
+		});
 }
 
 function AddCharacter(characterName) {
-	PostAJAX("/character/create", { characterName: characterName }, (response) => {
-		console.log(response);
+	PostAJAX("/character/create", { characterName: characterName }).then((response) => {
+		if (response.success) {
+			response.msg = "AddCharacter Succeeded";
+			AddToSelect("room-tab-character-select", characterName, characterName);
+			AddToSelect("character-room-select", characterName, characterName);
+		}
+		UpdateConsole(response.msg, LOG_LEVEL.DEBUG);
+	});
+}
+
+function GetCharacters() {
+	GetAJAX("/character/list").then((response) => {
+		if (response.success) {
+			response.msg = "GetCharacters Succeeded";
+			response.data.forEach((characterName) => {
+				AddToSelect("character-select", characterName, characterName);
+				charactersInRooms[characterName] = new Set();
+			});
+		} else {
+			response.msg = "GetCharacters Failed";
+		}
+		UpdateConsole(response.msg, LOG_LEVEL.DEBUG);
 	});
 }
 
 function DeleteCharacter(characterName) {
-	PostAJAX("/character/delete", { characterName: characterName }, (response) => {
-		console.log(response);
+	PostAJAX("/character/delete", { characterName: characterName }).then((response) => {
+		if (response.success) {
+			response.msg = "DeleteCharacter Succeeded";
+			RemoveInSelect("room-tab-character-select", characterName);
+			RemoveInSelect("character-room-select", characterName);
+		}
+		UpdateConsole(response, LOG_LEVEL.DEBUG);
 	});
 }
 

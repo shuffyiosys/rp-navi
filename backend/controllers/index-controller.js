@@ -9,7 +9,10 @@ function GetIndexPage(req, res) {
 }
 
 function GetChatPage(req, res) {
-	const pageData = new PageRenderParams("RP Navi Chat", req.session, res.locals);
+	const data = {
+		loggedIn: `userID` in req.session,
+	};
+	const pageData = new PageRenderParams("RP Navi Chat", data, res.locals);
 	res.render("chat", pageData);
 }
 

@@ -26,10 +26,6 @@ async function GetCharacterData(characterName) {
 async function updateCharacterStatusType(characterName, newStatus) {
 	const key = `characterData:${characterName}`;
 	const exists = await redisClient.exists(key);
-
-	if (exists == 1) {
-		await redisClient.hset(key, STATUS_TYPE_KEY, newStatus);
-	}
 	return await redisClient.hgetall(key);
 }
 

@@ -10,6 +10,7 @@ const { logger, formatJson } = require(`../utils/logger`);
 const { AjaxResponse } = require(`../classes/ajax-response`);
 const { PageRenderParams } = require(`../classes/page-render-params`);
 const { AUTHENTICATION_RESULT, ACCOUNT_STATE } = require(`../data/account-data`);
+const { RESPONSES } = require(`../data/responses/account-responses`);
 
 /**
  * Handles creating an account requests
@@ -40,9 +41,9 @@ async function CreateAccount(req, res) {
 		req.session.userID = accountData.id.toString();
 		req.session.save();
 		mailer.sendVerifyMail(req.body.email, req.body.email, accountData.emailVerifyKey);
-		res.json(new AjaxResponse(true, `Account created`, {}));
+		res.json(RESPONSES.CREATED);
 	} else {
-		res.json(new AjaxResponse(false, `Error creating an account`, {}));
+		res.json(RESPONSES.CREATE_ERROR);
 	}
 }
 
@@ -62,7 +63,7 @@ async function GetAccountPage(req, res) {
 
 async function GetAccountData(req, res) {
 	if (!(`userID` in req.session)) {
-		res.json(new AjaxResponse(false, `Not logged in`, {}));
+		res.json(RESPONSES.NOT_LOGGED_IN);
 		return;
 	}
 
@@ -71,7 +72,6 @@ async function GetAccountData(req, res) {
 }
 
 async function LogoutAccount(req, res) {
-	console.log(req);
 	req.session.destroy((err) => {
 		if (err) {
 			logger.error(err);

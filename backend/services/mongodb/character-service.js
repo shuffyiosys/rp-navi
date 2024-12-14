@@ -71,7 +71,7 @@ async function GetCharacterProfile(characterName) {
 
 async function CheckOwnership(accountID, characterName) {
 	const ownerID = ObjectId(accountID);
-	return model.exists({ owner: ownerID, characterName: characterName });
+	return model.exists({ owner: ownerID, characterName: characterName }) !== null;
 }
 
 async function GetCharacterData(accountID, characterName) {

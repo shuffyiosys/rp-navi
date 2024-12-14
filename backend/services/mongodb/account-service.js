@@ -103,7 +103,7 @@ async function AuthenticateUser(password, identification, type) {
 	}
 
 	const correctPassword = await crypto.VerifyPassword(accountData.password, password);
-	console.log(correctPassword);
+	logger.debug(`Correct password: ${correctPassword}`);
 	if (!correctPassword) {
 		return response;
 	} else if (accountData.status == ACCOUNT_STATE.NEED_NEW_PASSOWRD) {

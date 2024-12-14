@@ -90,9 +90,11 @@ function onError(error, port) {
 		case "EACCES":
 			console.error(bind + " requires elevated privileges");
 			process.exit(1);
+			break; // Linter gets mad if this isn't here
 		case "EADDRINUSE":
 			console.error(bind + " is already in use");
 			process.exit(1);
+			break; // Linter gets mad if this isn't here
 		default:
 			throw error;
 	}

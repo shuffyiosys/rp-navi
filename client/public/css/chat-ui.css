@@ -1,9 +1,40 @@
+
+:root {
+	--main-dark-color: #181C14;
+	--sub-dark-color: #3C3D37;
+	--lite-dark-color: #697565;
+	--light-color: #ECDFCC;
+}
+
 html,
 body {
 	height: 100%;
-	background-color: #f7eedd;
+	background-color: var(--main-dark-color);
 }
 
+/* Dialog boxes **************************************************************/
+.dialog-box {
+	border: 2px solid var(--lite-dark-color);
+	border-radius: 4px;
+	background: var(--sub-dark-color);
+}
+
+.align-items-center {
+	align-items: center !important;
+}
+
+#login-dialog {
+	margin: auto;
+	max-width: 320px;
+	display: none;
+}
+
+#settings-dialog {
+	width: 80%;
+	height: 80%;
+}
+
+/* Main chat areas ***********************************************************/
 .main-container,
 .main-container > div {
 	min-width: 960px;

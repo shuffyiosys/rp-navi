@@ -14,9 +14,9 @@ async function GetGroupCreatePage(req, res) {
 
 	const groupData = GroupService.CreateGroup(req.body.groupName, req.body.characterName);
 	if (groupData !== null) {
-		res.json(new AjaxResponse("success"));
+		res.json(new AjaxResponse(true));
 	} else {
-		res.json(new AjaxResponse("error", "Error creating the group", {}));
+		res.json(new AjaxResponse(false, "Error creating the group", {}));
 	}
 }
 
@@ -56,9 +56,9 @@ async function GetGroupPageEditor(req, res) {
 	const ownerId = req.session.userID;
 	const characterData = await GroupService(characterName);
 	if (characterData === null) {
-		res.json(new AjaxResponse("error", "A character with this name does not exist", {}));
+		res.json(new AjaxResponse(false, "A character with this name does not exist", {}));
 	} else if (characterData.owner.toString() != ownerId) {
-		res.json(new AjaxResponse("error", "Account does not own character", {}));
+		res.json(new AjaxResponse(false, "Account does not own character", {}));
 	} else {
 		const data = {
 			name: characterData.characterName,
@@ -85,17 +85,17 @@ async function CreateGroup(req, res) {
 	}
 
 	if (await GroupService.CheckGroupExists(req.body.groupName)) {
-		res.json(new AjaxResponse("error", "This group already exists", {}));
+		res.json(new AjaxResponse(false, "This group already exists", {}));
 		return;
 	} else if (!(await CharacterService.CheckOwnership(req.session.userID, req.body.characterName))) {
-		res.json(new AjaxResponse("error", "Account doesn't own the character", {}));
+		res.json(new AjaxResponse(false, "Account doesn't own the character", {}));
 		logger.notice(`Account ${req.session.userID} inputted unowned character ${req.body.characterName}`);
 		return;
 	}
 
 	const groupData = await GroupService.CreateGroup(req.body.groupName, req.body.characterName);
 	if (groupData === null) {
-		res.json(new AjaxResponse("error", "There was an error creating the group", {}));
+		res.json(new AjaxResponse(false, "There was an error creating the group", {}));
 		return;
 	} else {
 		const pageData = new PageRenderParams("Group Page Editor", {}, res.locals);
