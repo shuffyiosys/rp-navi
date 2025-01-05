@@ -71,8 +71,8 @@ function SubmitLogin(username, password) {
 			.then((response) => {
 				if (response.success) {
 					response.msg = "Login successful";
-					socket.emit("logged in");
 					GetCharacters();
+					socket.emit("logged in");
 				}
 				UpdateConsole(response.msg, LOG_LEVEL.DEBUG);
 			})
@@ -124,6 +124,7 @@ function GetCharacters() {
 	GetAJAX("/character/list").then((response) => {
 		if (response.success) {
 			response.msg = "GetCharacters Succeeded";
+			response.data.sort();
 			response.data.forEach((characterName) => {
 				AddToSelect("character-select", characterName, characterName);
 				charactersInRooms[characterName] = new Set();

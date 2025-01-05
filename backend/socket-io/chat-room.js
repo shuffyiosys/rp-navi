@@ -1,16 +1,15 @@
 const { logger, formatJson } = require(`../utils/logger`);
 const { AjaxResponse } = require(`../classes/ajax-response`);
-const { getMD5 } = require(`../utils/crypto`);
 
-const chatService = require(`../services/redis/chatroom-service`);
-const userService = require("../services/redis/user-service");
-const characterRedisService = require(`../services/redis/character-service`);
-const characterMongoDb = require(`../services/mongodb/character-service`);
+const accountRedis = require("../services/redis/account-service");
+const chatRedis = require(`../services/redis/chatroom-service`);
+const userRedis = require(`../services/redis/user-service`);
+const { checkOwnership, getOwner } = require(`../services/mongodb/character-service`);
 
 /* Signals definitions. Listed here since some IDEs will mark unused variables. */
 const ROOM_MSG_SIG = "room message posted";
 const ROOM_ADDED_SIG = "room added";
-const ROOM_REMOVED_SIG = "room removed";
+// const ROOM_REMOVED_SIG = "room removed";
 const ROOM_UPDATE_SIG = "room updated";
 
 const USER_JOINED_SIG = "user joined";
@@ -32,34 +31,34 @@ const BANNED_SIG = "banned";
  * @param {*} data
  * @returns
  */
-async function verifyCommonParameters(socket, data) {
+async function verifyInputs(socket, inputdata) {
 	let response = new AjaxResponse();
 
-	if (!("characterName" in data) || !("roomName" in data)) {
+	if (!("characterName" in inputdata && "roomName" in inputdata)) {
 		response.msg = "Missing parameters";
 	}
 
+	const { characterName } = inputdata;
 	const userId = socket.request.session.userID;
-	const ownsCharacter = await VerifyCharacterOwnership(data.characterName, userId);
-	const roomExists = await chatService.checkRoomExists(data.roomName);
+	const ownsCharacter = await verifyOwner(characterName, userId);
 	if (!ownsCharacter) {
-		response.msg = `User does not own ${data.characterName}`;
-	} else if (!roomExists) {
-		response.msg = `Room ${data.roomName} is not available.`;
+		response.msg = `User does not own ${characterName}`;
 	} else {
 		response.success = true;
 	}
 	return response;
 }
 
-async function VerifyCharacterOwnership(characterName, userID) {
-	let characterOwner = await characterRedisService.getCharacterOwner(characterName);
-	let ownsCharacter = false;
-	if (characterOwner === null) {
-		characterOwner = await characterMongoDb.CheckOwnership(userID, characterName);
-		characterRedisService.addCharacterOwner(characterName, characterOwner);
+/** This function caches character ownership from MongoDB to Redis */
+async function verifyOwner(characterName, userID) {
+	let ownsCharacter = await accountRedis.verifyOwner(characterName);
+
+	if (!ownsCharacter) {
+		ownsCharacter = await checkOwnership(characterName, userID);
+		if (ownsCharacter) {
+			accountRedis.addOwner(characterName, userID);
+		}
 	}
-	ownsCharacter = characterOwner === null ? false : characterOwner;
 	logger.debug(`${userID} owns ${characterName}? ${ownsCharacter}`);
 	return ownsCharacter;
 }
@@ -68,195 +67,178 @@ async function VerifyCharacterOwnership(characterName, userID) {
 /**
  * Creates a chat room in the socket.
  * @param {*} socket
- * @param {*} data - Data used to create the room. Requires a characterName and roomName. Other parameters are optional.
+ * @param {*} data - Data used to create the room. Requires a characterName and
+ *                   roomName. Other parameters are optional.
  * @returns
  */
 async function handleCreateRoom(socket, data) {
-	logger.debug(`Handling create room ${formatJson(data)}`);
 	let response = new AjaxResponse();
-	if (!("characterName" in data) || !("roomName" in data)) {
+	if (!("characterName" in data && "roomName" in data)) {
 		response.msg = "Missing parameters";
+		return response;
 	}
-	const roomExists = await chatService.checkRoomExists(data.roomName);
-	const ownsCharacter = await VerifyCharacterOwnership(data.characterName, socket.request.session.userID);
 
-	if (roomExists == 1) {
+	const { characterName, roomName } = data;
+	const { userID } = socket.request.session;
+
+	if (await chatRedis.checkRoomExists(roomName)) {
 		response.msg = `Room already exists`;
-	} else if (!ownsCharacter) {
-		response.msg = `User does not own ${data.characterName}`;
+	} else if (!(await verifyOwner(characterName, userID))) {
+		response.msg = `Error with creating room`;
 	} else {
 		response.success = true;
-		await chatService.createRoom(data);
-		await chatService.addMod(data.roomName, data.characterName);
-		await chatService.addInRoom(data.roomName, data.characterName);
-		socket.join(data.roomName);
-		socket.broadcast.emit(ROOM_ADDED_SIG, { roomName: data.roomName });
+		await chatRedis.createRoom(data);
+		await chatRedis.addInRoom(roomName, characterName);
+		await accountRedis.incrementInRoom(userID, roomName);
+		socket.join(roomName);
+		socket.broadcast.emit(ROOM_ADDED_SIG, { roomName: roomName });
 	}
 	return response;
 }
 
 async function handleJoinRoom(socket, data) {
 	logger.debug(`handleJoinRoom: ${formatJson(data)}`);
-	let response = await verifyCommonParameters(socket, data);
+	const response = await verifyInputs(socket, data);
 
 	if (!response.success) {
 		return response;
 	}
-	response.success = false; // Reset this
-	const isBanned = await chatService.checkIfBanned(data.roomName, data.characterName);
-	if (isBanned == 1) {
-		response.msg = `You are banned from ${data.roomName}`;
+	const { characterName, roomName } = data;
+	const { userID } = socket.request.session;
+
+	if (await chatRedis.isBanned(roomName, characterName)) {
+		response.success = false;
+		response.msg = `You are banned from ${roomName}`;
+		return response;
+	} else if ((await chatRedis.addInRoom(roomName, characterName)) == 0) {
+		response.success = false;
+		response.msg = `Character is already in room`;
 		return response;
 	}
 
-	let joinResult = await chatService.addInRoom(data.roomName, data.characterName);
-	if (joinResult == 0) {
-		response.msg = `Character is already in room`;
-	} else {
-		response.success = true;
-		characterRedisService.addCharacterInRoom(data.characterName, data.roomName);
-		socket.join(data.roomName);
-		socket
-			.to(data.roomName)
-			.emit(USER_JOINED_SIG, { roomName: data.roomName, characterName: data.characterName });
-	}
+	response.data = await chatRedis.getData(roomName);
+	await accountRedis.incrementInRoom(userID, roomName);
+	socket.join(roomName);
+	socket.to(roomName).emit(USER_JOINED_SIG, data);
 	return response;
 }
 
-async function handleLeaveRoom(server, socket, data) {
+async function handleLeaveRoom(socket, data) {
 	logger.debug(`handleLeaveRoom: ${formatJson(data)}`);
-	let response = await verifyCommonParameters(socket, data);
+	const response = await verifyInputs(socket, data);
 
 	if (!response.success) {
 		return response;
 	}
+	const { characterName, roomName } = data;
+	if ((await chatRedis.removeInRoom(roomName, characterName)) == 1) {
+		socket.leave(roomName);
 
-	let leaveResult = await chatService.removeInRoom(data.roomName, data.characterName);
-	if (leaveResult == 0) {
-		response.message = "Character is not in room";
+		let userList = await chatRedis.getInRoom(roomName);
+		if (userList.length == 0) {
+			// TODO: Reinstate this logic at some point
+			// chatRedis.removeRoom(roomName);
+			// socket.broadcast(ROOM_REMOVED_SIG, { roomName: roomName });
+		} else {
+			socket.to(roomName).emit(USER_LEFT_SIG, data);
+		}
+		return response;
+	} else {
+		response.success = false;
+		response.msg = "Error leaving room, try again.";
 		return response;
 	}
-
-	response.success = true;
-	await characterRedisService.removeRoomWithCharacter(data.characterName, data.roomName);
-	socket.leave(data.roomName);
-
-	let userList = await chatService.getUsersInRoom(data.roomName);
-	if (userList.length == 0) {
-		chatService.removeRoom(data.roomName);
-		server.emit(ROOM_REMOVED_SIG, { roomName: data.roomName });
-	} else {
-		socket
-			.to(data.roomName)
-			.emit(USER_LEFT_SIG, { roomName: data.roomName, characterName: data.characterName });
-	}
-	return response;
 }
 
 async function handlePostMessage(socket, data) {
 	logger.debug(`handlePostMessage: ${formatJson(data)}`);
-	let response = await verifyCommonParameters(socket, data);
+	let response = await verifyInputs(socket, data);
 
 	if (!response.success) {
 		return response;
 	}
 
-	let userInRoom = await chatService.checkInRoom(data.roomName, data.characterName);
-	logger.debug(`${data.characterName} in ${data.roomName}? ${userInRoom == 1}`);
-	if (userInRoom == 1) {
-		socket.to(data.roomName).emit(ROOM_MSG_SIG, data);
+	const { characterName, roomName } = data;
+	if (await chatRedis.checkInRoom(roomName, characterName)) {
+		socket.to(roomName).emit(ROOM_MSG_SIG, data);
+		response.data = data;
+	} else {
+		response.success = false;
 	}
 	return response;
 }
 
-async function handleGetRoomInfo(socket, data) {
+async function handleGetRoomInfo(data) {
 	logger.debug(`handleGetRoomInfo: ${formatJson(data)}`);
 	let response = new AjaxResponse();
-
-	if (!("roomName" in data)) {
-		response.msg = "Missing room name";
+	if (!response.success) {
 		return response;
 	}
 
-	let isMod = false;
-	if ("characterName" in data) {
-		const ownsCharacter = await characterRedisService.getCharacterOwner(data.characterName);
-
-		if (!ownsCharacter) {
-			isMod = await chatService.isMod(data.roomName, data.characterName);
-		}
-	}
-
-	const roomData = await chatService.getRoomData(data.roomName, isMod);
+	const { characterName, roomName } = data;
+	const isMod = await chatRedis.isMod(roomName, characterName);
+	const roomData = await chatRedis.getData(roomName, isMod);
 	response.success = Object.keys(roomData).length !== 0;
 	response.data = roomData;
-
 	return response;
 }
 
 async function handleModAction(server, socket, data) {
 	logger.debug(`handleModAction: ${formatJson(data)}`);
-	let response = await verifyCommonParameters(socket, data);
+	const response = await verifyInputs(socket, data);
 
 	if (!response.success) {
 		return response;
-	} else if (!("reasonMsg" in data) || !("targetName" in data)) {
+	} else if (!("reasonMsg" in data && "targetName" in data)) {
 		response.message = "Not enough parameters";
 		return response;
 	}
+	const { characterName, roomName, targetName, action } = data;
 
-	const isOwner = await chatService.isOwner(data.roomName, data.characterName);
-	const isMod = await chatService.isMod(data.roomName, data.characterName);
-	const targetIsMod = await chatService.isMod(data.roomName, data.targetName);
+	// A bunch of things to verify the pecking order
+	const isOwner = await chatRedis.isOwner(roomName, characterName);
+	const isMod = await chatRedis.isMod(roomName, characterName);
+	const targetIsMod = await chatRedis.isMod(roomName, targetName);
 
 	logger.debug(`isOwner: ${isOwner} | isMod: ${isMod} | targetIsMod: ${targetIsMod}`);
 
-	if (isMod == false) {
+	if (!isOwner) {
 		return response;
-	} else if (targetIsMod == true && isOwner == false) {
+	} else if (isMod && targetIsMod) {
 		return response;
 	}
 
-	const action = data[`action`];
-	let modActionData = {
-		roomName: data.roomName,
-		targetName: data.targetName,
-		reason: data.reasonMsg,
-	};
+	delete data[`action`];
 	response.success = true;
 
-	logger.debug(`Performing mod action: ${formatJson(modActionData)}`);
-	if (action == `kick`) {
-		const targetUserId = await characterRedisService.getCharacterOwner(data.targetName);
-		const socketTarget = await userService.getUserConnection(targetUserId);
-		const removeResult = await chatService.removeInRoom(data.roomName, data.targetName);
-		if (removeResult > 0) {
-			logger.debug(`Kicking ${data.targetName} (${socketTarget}) from ${data.roomName}`);
-			socket.to(data.roomName).emit(USER_KICKED_SIG, modActionData);
-			server.to(socketTarget).emit(KICKED_SIG, data.reasonMsg);
-		}
-	} else if (action == `ban`) {
-		await chatService.removeInRoom(data.roomName, data.targetName);
-		await chatService.addBanned(data.roomName, data.targetName);
+	logger.debug(`Performing mod action: ${formatJson(data)}`);
+	if (action == `kick` || action == `ban`) {
+		const emitSig = action == `kick` ? USER_KICKED_SIG : USER_BANNED_SIG;
+		const ackSig = action == `kick` ? KICKED_SIG : BANNED_SIG;
+		const targetUserId = await getOwner(targetName);
+		const socketTarget = await userRedis.getUserConnection(targetUserId);
+		const removeResult = await chatRedis.removeInRoom(roomName, targetName);
 
-		const targetUserId = await characterRedisService.getCharacterOwner(data.targetName);
-		const socketTarget = await userService.getUserConnection(targetUserId);
-		socket.to(data.roomName).emit(USER_BANNED_SIG, modActionData);
-		server.to(socketTarget).emit(BANNED_SIG, data.reasonMsg);
+		// TODO: Resolve the issue of making sure the person booted stops receiving messages
+		if (removeResult > 0) {
+			logger.debug(`Kicking ${targetName} (${socketTarget}) from ${roomName}`);
+			socket.to(roomName).emit(emitSig, data);
+			server.to(socketTarget).emit(ackSig, data.reasonMsg);
+		}
 	} else if (action == `unban`) {
-		await chatService.removeBanned(data.roomName, data.targetName);
-		socket.to(data.roomName).emit(USER_UNBANNED_SIG, modActionData);
+		await chatRedis.removeBanned(roomName, targetName);
+		socket.to(roomName).emit(USER_UNBANNED_SIG, data);
 	} else if (isOwner == true) {
 		if (action == `mod`) {
-			await chatService.addMod(data.roomName, data.targetName);
+			await chatRedis.addMod(roomName, targetName);
 		} else if (action == `unmod`) {
-			await chatService.removeMod(data.roomName, data.targetName);
+			await chatRedis.removeMod(roomName, targetName);
 		} else if (action == `new owner`) {
-			await chatService.addMod(data.roomName, data.targetName);
-			await chatService.switchOwner(data.roomName, data.targetName);
+			await chatRedis.addMod(roomName, targetName);
+			await chatRedis.switchOwner(roomName, targetName);
 		}
 	} else {
-		response.msg = `Unhandled action ${action}`;
+		response.msg = `UnHandled action ${action}`;
 		response.success = false;
 	}
 	return response;
@@ -264,37 +246,39 @@ async function handleModAction(server, socket, data) {
 
 async function handleSetRoomSettings(socket, data) {
 	logger.debug(`handleSetRoomSettings: ${formatJson(data)}`);
-	let response = await verifyCommonParameters(socket, data);
+	let response = await verifyInputs(socket, data);
 	if (!response.success) {
 		return response;
 	}
 
-	const isMod = await chatService.isMod(data.roomName, data.characterName);
+	const { characterName, roomName } = data;
+	const isMod = await chatRedis.isMod(roomName, characterName);
 	if (isMod == false) {
 		return response;
 	}
 
 	if (`description` in data) {
-		chatService.setDescription(data.roomName, data.description);
+		chatRedis.updateOptions(roomName, data.description);
 	}
 	if (`isPrivate` in data) {
-		chatService.setPrivate(data.roomName, data.isPrivate);
+		chatRedis.setPrivate(roomName, data.isPrivate);
 	}
 	response.success = true;
 	return response;
 }
 
 async function broadcastRoomUpdate(socket, data) {
-	const roomData = await chatService.getRoomData(data.roomName, false);
+	const { roomName } = data;
+	const roomData = await chatRedis.getData(roomName, false);
 	let updateAnnouncement = new AjaxResponse();
 	updateAnnouncement.success = true;
 	updateAnnouncement.data = roomData;
-	socket.to(data.roomName).emit(ROOM_UPDATE_SIG, updateAnnouncement);
+	socket.to(roomName).emit(ROOM_UPDATE_SIG, updateAnnouncement);
 }
 
 async function connectHandlers(server, socket) {
 	socket.on(`get rooms`, async (data, ack) => {
-		let roomList = await chatService.getPublicRoomNames();
+		let roomList = await chatRedis.getPublicRoomNames();
 		ack(roomList);
 	});
 
@@ -309,18 +293,16 @@ async function connectHandlers(server, socket) {
 	});
 
 	socket.on(`leave room`, async (data, ack) => {
-		let response = await handleLeaveRoom(server, socket, data);
+		let response = await handleLeaveRoom(socket, data);
 		ack(response);
 	});
 
 	socket.on(`post message`, async (data, ack) => {
-		let response = await handlePostMessage(socket, data);
-		ack(response);
+		ack(await handlePostMessage(socket, data));
 	});
 
 	socket.on(`get room info`, async (data, ack) => {
-		let response = await handleGetRoomInfo(socket, data);
-		ack(response);
+		ack(await handleGetRoomInfo(data));
 	});
 
 	socket.on(`mod action`, async (data, ack) => {
@@ -335,24 +317,29 @@ async function connectHandlers(server, socket) {
 		}
 		ack(response);
 	});
+
+	socket.emit(`room list`, await chatRedis.getPublicRoomNames());
 }
 
-async function removeInRooms(server, socket) {
-	const userId = socket.request.session.userID;
-	const characterList = await characterMongoDb.GetCharacterList(userId);
-	logger.debug(`Removing in rooms for ${userId}`);
+async function removeInRooms(socket) {
+	const { userID } = socket.request.session;
+	const characterList = await accountRedis.getCharacters(userID);
+	const rooms = await accountRedis.getInRooms(userID);
+	logger.debug(`Removing in rooms for ${userID}`);
 
-	characterList.forEach(async (characterName) => {
-		let charactersInRooms = await characterRedisService.getRoomsWithCharacter(characterName);
-		charactersInRooms.forEach((roomName) => {
-			logger.debug(`Removing ${characterName} from ${roomName}`);
-			let data = {
+	rooms.forEach((roomName) => {
+		characterList.forEach(async (characterName) => {
+			let result = await chatRedis.removeInRoom(roomName, characterName);
+			if (result == 0) {
+				return;
+			}
+			socket.to(roomName).emit(USER_LEFT_SIG, {
 				characterName: characterName,
 				roomName: roomName,
-			};
-			handleLeaveRoom(server, socket, data);
+			});
 		});
 	});
+	accountRedis.clearInRooms(userID);
 }
 
 module.exports = {

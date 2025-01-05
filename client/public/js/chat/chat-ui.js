@@ -63,13 +63,18 @@ function RemoveInSelect(selectID, optionValue) {
 	}
 }
 
+function cssName(name) {
+	return name.toLowerCase().replaceAll(" ", "-");
+}
+
 function CreateMessagePage(roomName) {
+	roomName = cssName(roomName);
+
 	if (document.getElementById(`${roomName}-page`) !== null) {
 		return;
 	}
 
 	const newPage = document.createElement("div");
-	roomName = roomName.toLowerCase().replaceAll(" ", "-");
 	newPage.id = `${roomName}-page`;
 	newPage.classList.add("msg-page");
 
@@ -78,7 +83,8 @@ function CreateMessagePage(roomName) {
 }
 
 function SwitchMessagePage(roomName) {
-	const cssRoomName = roomName.toLowerCase().replaceAll(" ", "-");
+	document.getElementById("chat-msgs-label").innerText = roomName;
+	const cssRoomName = cssName(roomName);
 	if (document.querySelectorAll(`.msg-page[selected="yes"]`).length > 0) {
 		document.querySelectorAll(`.msg-page[selected="yes"]`)[0].removeAttribute("selected");
 	}
@@ -97,20 +103,103 @@ function SwitchMessagePage(roomName) {
 
 function AddMessageToPage(roomName, message) {
 	const messageEl = document.createElement("p");
-	roomName = roomName.toLowerCase().replaceAll(" ", "-");
+	roomName = cssName(roomName);
 	messageEl.innerText = `[${GetFormattedTime()}] ${message}`;
 	document.getElementById(`${roomName}-page`).appendChild(messageEl);
 }
 
 function DeleteMessagePage(roomName) {
-	roomName = roomName.toLowerCase().replaceAll(" ", "-");
+	roomName = cssName(roomName);
 	console.log(document.getElementById(`${roomName}-page`));
 	if (document.getElementById(`${roomName}-page`) !== null) {
 		document.getElementById(`${roomName}-page`).remove();
 	}
 }
 
-/* UI Handlers */
+/* User list *****************************************************************/
+function createUserList(userList, roomName) {
+	const listEl = document.getElementById("room-users");
+	const listContainerEl = document.createElement("div");
+	roomName = cssName(roomName);
+	listContainerEl.id = `${roomName}-users`;
+	listContainerEl.classList.add("user-list");
+
+	const userElList = [];
+	userList.sort();
+
+	userList.forEach((user) => {
+		const userEl = document.createElement("p");
+		userEl.innerText = user;
+		userElList.push(userEl);
+	});
+	listContainerEl.replaceChildren(...userElList);
+	listEl.appendChild(listContainerEl);
+	switchUserList(roomName);
+}
+
+function switchUserList(roomName) {
+	const cssRoomName = cssName(roomName);
+	document.getElementById("user-list-room").innerText = roomName;
+	const oldListEl = document.querySelectorAll(`.user-list[selected="yes"]`);
+	const targetListEl = document.getElementById(`${cssRoomName}-users`);
+
+	if (oldListEl.length > 0) {
+		oldListEl[0].removeAttribute("selected");
+	}
+
+	if (cssRoomName != "system-msgs") {
+		targetListEl.setAttribute("selected", "yes");
+	}
+}
+
+function addToUserList(newUser, roomName) {
+	const listContainerEl = document.getElementById(`${cssName(roomName)}-users`);
+	console.log(listContainerEl);
+	if (listContainerEl === null) {
+		return;
+	}
+
+	let inserted = false;
+	for (let idx = 0; idx < listContainerEl.childNodes.length; idx++) {
+		let userEl = listContainerEl.childNodes[idx];
+		if (userEl.innerText > newUser) {
+			inserted = true;
+			const newUserEl = document.createElement("p");
+			newUserEl.innerText = newUser;
+			listContainerEl.insertBefore(newUserEl, listContainerEl.childNodes[idx]);
+			break;
+		}
+	}
+
+	if (!inserted) {
+		const newUserEl = document.createElement("p");
+		newUserEl.innerText = newUser;
+		listContainerEl.appendChild(newUserEl);
+	}
+}
+
+function removeInUserList(outUser, roomName) {
+	roomName = cssName(roomName);
+	const listContainerEl = document.getElementById(`${roomName}-users`);
+	if (listContainerEl === null) {
+		return;
+	}
+	for (let idx = 0; idx < listContainerEl.childNodes.length; idx++) {
+		let userEl = listContainerEl.childNodes[idx];
+		if (userEl.innerText == outUser) {
+			listContainerEl.removeChild(listContainerEl.childNodes[idx]);
+			break;
+		}
+	}
+}
+
+function removeUserList(roomName) {
+	const listContainerEl = document.getElementById(`${cssName(roomName)}-users`);
+	document.getElementById("user-list-room").innerText = "";
+	listContainerEl.remove();
+}
+
+/* UI Handlers ****************************************************************/
 function LoginBtnHandler() {
 	SubmitLogin(
 		document.getElementById("login-email-input").value,
@@ -140,6 +229,7 @@ function DeleteCharacterBtnHandler() {
 function RoomSelectHandler() {
 	const roomSelect = document.getElementById("room-select");
 	SwitchMessagePage(roomSelect[roomSelect.selectedIndex].value);
+	switchUserList(roomSelect[roomSelect.selectedIndex].value);
 }
 
 function CreateRoomBtnHandler() {
@@ -158,18 +248,21 @@ function CreateRoomBtnHandler() {
 function JoinRoomBtnHandler() {
 	const characterSelect = document.getElementById("character-select");
 	const roomSelect = document.getElementById("room-list-select");
-	joinRoom(
-		roomSelect[roomSelect.selectedIndex].value,
-		characterSelect[characterSelect.selectedIndex].value
-	);
+	joinRoom(roomSelect[roomSelect.selectedIndex].value, characterSelect[characterSelect.selectedIndex].value);
 }
 
 function LeaveRoomBtnHandler() {
 	const characterSelect = document.getElementById("character-select");
 	const roomSelect = document.getElementById("room-select");
-	leaveRoom(
-		roomSelect[roomSelect.selectedIndex].value,
-		characterSelect[characterSelect.selectedIndex].value
+	leaveRoom(roomSelect[roomSelect.selectedIndex].value, characterSelect[characterSelect.selectedIndex].value);
+}
+
+function JoinRandomBtnHandler() {
+	const characters = Object.keys(charactersInRooms);
+	const rooms = Array.from(roomsList);
+	joinRoom(
+		rooms[Math.floor(Math.random() * rooms.length)],
+		characters[Math.floor(Math.random() * characters.length)]
 	);
 }
 

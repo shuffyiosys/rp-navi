@@ -3,8 +3,8 @@ const { logger, formatJson } = require(`../utils/logger`);
 const { SocketIoResponse } = require(`../classes/socket-io-response`);
 
 async function checkCharactersExist(fromCharacter, toCharacter) {
-	const requesterData = await GetCharacterData(fromCharacter);
-	const recipientData = await GetCharacterData(toCharacter);
+	const requesterData = await getData(fromCharacter);
+	const recipientData = await getData(toCharacter);
 	if (requesterData == null || recipientData == null) {
 		return false;
 	} else {

@@ -5,17 +5,23 @@
 const socket = io();
 const charactersInRooms = {};
 const joinedRooms = {};
+const roomsList = new Set();
 
 document.addEventListener("DOMContentLoaded", (arg) => {
 	function defaultHandler(response) {
+		// TODO: How do we handle server disconnection/reconnection?
 		console.log(response);
 	}
 
 	/* System events */
 	socket.on("connect", () => {
-		console.log(socket.id);
+		console.log("Connected:", socket.id);
 	});
-	socket.on("disconnect", defaultHandler);
+
+	socket.on("disconnect", (resp) => {
+		console.log("Disconnected:", resp);
+		UpdateConsole(resp);
+	});
 
 	socket.on("login status", (response) => {
 		if (response.loggedIn) {
@@ -24,7 +30,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 	});
 
 	socket.on("system message", (resp) => {
-		console.log("Handling system message", resp);
+		console.log("Received system message", resp);
 		UpdateConsole(resp);
 	});
 
@@ -39,7 +45,9 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 	/* Chat room events */
 	socket.on("room list", (resp) => {
 		UpdateConsole("Received rooms", LOG_LEVEL.DEBUG);
+		// TODO: Make this update the roomlist instead of add to it
 		resp.forEach((roomName) => {
+			roomsList.add(roomName);
 			AddToSelect("room-list-select", roomName, roomName);
 		});
 	});
@@ -48,7 +56,9 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		UpdateConsole(message, LOG_LEVEL.DEBUG);
 		AddMessageToPage(resp.roomName, message);
 	});
-	socket.on("room info", (resp) => console.log("Handling room info", resp));
+	socket.on("room info", (resp) => {
+		console.log("Received room info:", resp);
+	});
 
 	socket.on("room added", (resp) => {
 		AddToSelect("room-list-select", resp.roomName, resp.roomName);
@@ -61,15 +71,21 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 	});
 
 	socket.on("user left", (resp) => {
-		const message = `${resp.characterName} left ${resp.roomName}`;
+		const { characterName, roomName } = resp;
+		const message = `${characterName} left ${roomName}`;
 		UpdateConsole(message, LOG_LEVEL.DEBUG);
-		AddMessageToPage(resp.roomName, message);
+		AddMessageToPage(roomName, message);
+		removeInUserList(characterName, roomName);
 	});
+
 	socket.on("user joined", (resp) => {
-		const message = `${resp.characterName} entered ${resp.roomName}`;
+		const { characterName, roomName } = resp;
+		const message = `${characterName} entered ${roomName}`;
+		addToUserList(characterName, roomName);
+		AddMessageToPage(roomName, message);
 		UpdateConsole(message, LOG_LEVEL.DEBUG);
-		AddMessageToPage(resp.roomName, message);
 	});
+
 	socket.on("user kicked", (resp) => console.log("Handling user kicked", resp));
 	socket.on("user banned", (resp) => console.log("Handling user banned", resp));
 
@@ -78,12 +94,11 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 	socket.on("room error", (resp) => console.log("Handling room error", resp));
 
 	socket.on("kicked", (resp) => console.log("Handling kicked", resp));
-
-	getRooms();
 });
 
 function getRooms() {
 	socket.emit("get rooms", null, (response) => {
+		console.log(`Recevied rooms: `, response);
 		UpdateConsole("Received rooms", LOG_LEVEL.DEBUG);
 		response.forEach((roomName) => {
 			AddToSelect("room-list-select", roomName, roomName);
@@ -122,6 +137,12 @@ function createRoom(roomName, characterName, description = "", privateRoom = fal
 }
 
 function joinRoom(roomName, characterName, password = "") {
+	console.log(`Joining ${roomName} as ${characterName}`);
+	if (charactersInRooms[characterName].has(roomName)) {
+		UpdateConsole(`${characterName} is already in ${roomName}`, LOG_LEVEL.DEBUG);
+		return;
+	}
+
 	let joinRoomData = {
 		roomName: roomName,
 		characterName: characterName,
@@ -130,43 +151,47 @@ function joinRoom(roomName, characterName, password = "") {
 		joinRoomData["password"] = password;
 	}
 	socket.emit("join room", joinRoomData, (response) => {
-		if (response.success) {
-			charactersInRooms[characterName].add(roomName);
+		console.log(response);
+		if (!response.success) {
+			UpdateConsole(response.msg, LOG_LEVEL.INFO);
+			return;
+		}
+		charactersInRooms[characterName].add(roomName);
+		if (!(roomName in joinedRooms)) {
+			joinedRooms[roomName] = 1;
 			AddToSelect("room-select", roomName, roomName);
 			CreateMessagePage(roomName);
-			AddMessageToPage(roomName, `You joined ${roomName} as ${characterName}`);
-			document
-				.querySelectorAll(`#room-select > option[value="${roomName}"]`)[0]
-				.setAttribute("selected", true);
-			SwitchMessagePage(roomName);
-			UpdateConsole(`${characterName} joined ${roomName}`, LOG_LEVEL.DEBUG);
+			createUserList(response.data.users, roomName);
 		} else {
-			UpdateConsole(response.msg, LOG_LEVEL.INFO);
+			addToUserList(characterName, roomName);
+			joinedRooms[roomName]++;
 		}
+		AddMessageToPage(roomName, `You joined ${roomName} as ${characterName}`);
+		document.querySelectorAll(`#room-select > option[value="${roomName}"]`)[0].setAttribute("selected", true);
+		SwitchMessagePage(roomName);
+		UpdateConsole(`${characterName} joined ${roomName}`, LOG_LEVEL.DEBUG);
 	});
 }
 
 function leaveRoom(roomName, characterName) {
-	socket.emit(
-		"leave room",
-		{
-			roomName: roomName,
-			characterName: characterName,
-		},
-		(response) => {
-			if (response.success) {
-				charactersInRooms[characterName].delete(roomName);
-				RemoveInSelect("room-select", roomName, roomName);
-				DeleteMessagePage(roomName);
-				if (document.getElementById("room-select").length == 1) {
-					SwitchMessagePage("system-msgs");
-				}
-				UpdateConsole(`${characterName} left ${roomName}`, LOG_LEVEL.DEBUG);
-			} else {
-				UpdateConsole(response.msg, LOG_LEVEL.INFO);
-			}
+	socket.emit("leave room", { roomName: roomName, characterName: characterName }, (response) => {
+		if (!response.success) {
+			UpdateConsole(response.msg, LOG_LEVEL.INFO);
+			return;
 		}
-	);
+
+		charactersInRooms[characterName].delete(roomName);
+		joinedRooms[roomName]--;
+		removeInUserList(characterName, roomName);
+
+		if (joinedRooms[roomName] <= 0) {
+			SwitchMessagePage("system-msgs");
+			RemoveInSelect("room-select", roomName, roomName);
+			removeUserList(roomName);
+			DeleteMessagePage(roomName);
+		}
+		UpdateConsole(`${characterName} left ${roomName}`, LOG_LEVEL.DEBUG);
+	});
 }
 
 function postChatMessage(roomName, characterName, message) {

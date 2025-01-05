@@ -87,7 +87,7 @@ async function CreateGroup(req, res) {
 	if (await GroupService.CheckGroupExists(req.body.groupName)) {
 		res.json(new AjaxResponse(false, "This group already exists", {}));
 		return;
-	} else if (!(await CharacterService.CheckOwnership(req.session.userID, req.body.characterName))) {
+	} else if (!(await CharacterService.checkOwnership(req.body.characterName, req.session.userID))) {
 		res.json(new AjaxResponse(false, "Account doesn't own the character", {}));
 		logger.notice(`Account ${req.session.userID} inputted unowned character ${req.body.characterName}`);
 		return;

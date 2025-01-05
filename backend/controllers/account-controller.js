@@ -192,7 +192,7 @@ async function RequestPasswordReset(req, res) {
 	res.json(new AjaxResponse(true, ``, {}));
 }
 
-async function VerifyPasswordReset(req, res) {
+async function verifyPasswordReset(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty() || `userID` in req.session) {
 		res.redirect(`/`);
@@ -338,7 +338,7 @@ module.exports = {
 	UpdateEmail,
 	UpdatePassword,
 	RequestPasswordReset,
-	VerifyPasswordReset,
+	verifyPasswordReset,
 	UpdatePasswordFromReset,
 
 	VerifyAccount,

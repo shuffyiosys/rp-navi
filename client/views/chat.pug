@@ -17,7 +17,7 @@ html(style="height:100%")
 			h1 RP Navi Chat Test Page
 		div.container-fluid(style="height: calc(100vh - 64px); overflow: hidden")
 			div.row(style="height:100%")
-				div#left-navbar.col-sm-3.p-3.text-white
+				div#left-navbar.col-sm-2.p-3.text-white
 					h3 Account
 					div.input-group
 						span.input-group-text Email address
@@ -43,6 +43,8 @@ html(style="height:100%")
 						select#character-select.form-select
 						label(for="room-tab-character-select") Perform action as...
 						button#delete-character-btn.btn.btn-danger(onclick="DeleteCharacterBtnHandler()") Delete
+					br
+					button.btn.btn-primary(onclick="JoinRandomBtnHandler()") Join random
 					hr
 					//- Private messaging
 					h3 Private Messages
@@ -50,7 +52,7 @@ html(style="height:100%")
 						span.input-group-text User
 						input#new-pm-name-input.form-control(type="text")
 						button#new-pm-btn.btn.btn-light(onclick="NewPMBtnHandler()") Start PM
-					br
+					hr
 					//- Room selection
 					h3 Room "Tabs"
 					div.form-floating.input-group
@@ -73,8 +75,12 @@ html(style="height:100%")
 						button#create-room-btn.btn.btn-light(onclick="CreateRoomBtnHandler()") Create
 					br
 
-				div#chat-page.col-sm-9.p-3.bg-dark.text-white(style="height: 100%;")
+				div#chat-page.col-sm-8.p-3.bg-dark.text-white(style="height: 100%;")
+					p#chat-msgs-label
 					div#chat-messages
 						div#system-msgs-page.msg-page(selected="yes")
 					div#chat-input-container
 						textarea#chat-input(style="width: 100%")
+				div#right-navbar.col-sm-2.p-3.bg-dark.text-white
+					p#user-list-room
+					div#room-users(style="height: 95%")

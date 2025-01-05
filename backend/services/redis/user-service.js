@@ -1,22 +1,15 @@
-const { logger, formatJson } = require("../../utils/logger");
 const { redisClient } = require("../../loaders/redis-db");
 
 async function setUserConnection(userId, socketId) {
-	const query = `connections:${userId}`;
-	let result = await redisClient.hset(query, "socketId", socketId);
-	return result;
+	return await redisClient.HSET(`connections:${userId}`, "socketId", socketId);
 }
 
 async function getUserConnection(userId) {
-	const query = `connections:${userId}`;
-	let result = await redisClient.hget(query, "socketId");
-	return result;
+	return await redisClient.HGET(`connections:${userId}`, "socketId");
 }
 
 async function removeUserConnection(userId) {
-	const query = `connections:${userId}`;
-	let result = await redisClient.del(query);
-	return result;
+	return await redisClient.DEL(`connections:${userId}`);
 }
 
 module.exports = {

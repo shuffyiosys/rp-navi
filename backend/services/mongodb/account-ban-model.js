@@ -13,7 +13,7 @@ async function addBan(accountID, banReason, expiryDate) {
 
 	let accountData = null;
 	try {
-		const docID = ObjectId(accountID);
+		const docID = new ObjectId(accountID);
 		accountData = await model.create({
 			accountID: docID,
 			reason: banReason,
@@ -30,7 +30,7 @@ async function getBannedAccounts() {}
 
 async function removeBan(accountID) {
 	logger.notice(`${accountID} is being unbanned`);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.deleteOne({ accountID: docID });
 	return operationResult;
 }

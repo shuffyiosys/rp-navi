@@ -1,6 +1,6 @@
 const { logger, formatJson } = require(`../utils/logger`);
 const { SocketIoResponse } = require(`../classes/socket-io-response`);
-const { GetCharacterData } = require(`../services/mongodb/character-service`);
+const { getData } = require(`../services/mongodb/character-service`);
 const { verifyUserOwnsCharacter } = require(`../services/redis/character-service`);
 
 async function connectHandlers(io, socket) {

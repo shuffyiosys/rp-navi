@@ -80,7 +80,7 @@ async function GetProfileEditor(req, res) {
 
 	const characterName = req.query.character;
 	const ownerId = req.session.userID;
-	const characterData = await characterService.GetCharacterData(characterName);
+	const characterData = await characterService.getData(characterName);
 	if (characterData === null) {
 		res.json(new AjaxResponse(false, "A character with this name does not exist", {}));
 	} else if (characterData.owner.toString() != ownerId) {

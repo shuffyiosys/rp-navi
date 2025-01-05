@@ -50,7 +50,7 @@ async function GetAccountExists(email) {
 }
 
 async function accountExistsById(accountID) {
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	return await model.exists({ _id: docID });
 }
 
@@ -64,7 +64,7 @@ async function accountExistsById(accountID) {
  * @returns An object from the DB of the account data
  */
 async function GetAccountDataByID(accountID, fields = "_id email emailVerifyKey") {
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	return await model.findById(docID, fields);
 }
 
@@ -102,7 +102,7 @@ async function AuthenticateUser(password, identification, type) {
 		return response;
 	}
 
-	const correctPassword = await crypto.VerifyPassword(accountData.password, password);
+	const correctPassword = await crypto.verifyPassword(accountData.password, password);
 	logger.debug(`Correct password: ${correctPassword}`);
 	if (!correctPassword) {
 		return response;
@@ -126,7 +126,7 @@ async function AuthenticateUser(password, identification, type) {
  */
 async function UpdateEmail(accountID, newEmail) {
 	logger.info(`${accountID} is updating their email to ${newEmail}`);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.updateOne(
 		{ _id: docID },
 		{ email: newEmail, emailVerifyKey: await crypto.generateKey() }
@@ -145,7 +145,7 @@ async function UpdateEmail(accountID, newEmail) {
 async function UpdatePassword(accountID, newPassword) {
 	const salt = await crypto.generateKey();
 	const newPasswordHash = await crypto.getPasswordHash(newPassword, salt);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 
 	logger.info(`${accountID} is updating their password`);
 	const operationResult = await model.updateOne({ _id: docID }, { password: newPasswordHash });
@@ -154,7 +154,7 @@ async function UpdatePassword(accountID, newPassword) {
 
 async function UpdateVerification(accountID, verificationKey) {
 	logger.info(`${accountID} is updating their email verification`);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.updateOne(
 		{ _id: docID, emailVerifyKey: verificationKey },
 		{ emailVerifyKey: "" }
@@ -170,7 +170,7 @@ async function UpdateVerification(accountID, verificationKey) {
  * @returns
  */
 async function AddBlockedUser(accountID, characterID) {
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 	blockedUsers.add(characterID);
@@ -179,7 +179,7 @@ async function AddBlockedUser(accountID, characterID) {
 }
 
 async function RemoveBlockedUser(accountID, characterID) {
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 	blockedUsers.delete(characterID);
@@ -188,7 +188,7 @@ async function RemoveBlockedUser(accountID, characterID) {
 }
 
 async function GetBlockedUsers(accountID) {
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	let accountData = await model.findOne({ _id: docID }, "blocked");
 	let blockedUsers = new Set(accountData.blocked);
 
@@ -213,7 +213,7 @@ async function GetBlockedUsers(accountID) {
  */
 async function DeleteAccount(accountID) {
 	logger.info(`${accountID} is deleting their account`);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.deleteOne({ _id: docID });
 	return operationResult;
 }
@@ -226,7 +226,7 @@ async function UpdateAccountState(accountID, newState) {
 		true,
 		"Provided account state was out of bounds"
 	);
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.updateOne({ _id: docID }, { state: newState });
 	return operationResult;
 }
@@ -240,7 +240,7 @@ async function UpdateAccountPrivilegeLevel(accountID, newPrivilegeLevel) {
 		"Provided privilege level was out of bounds"
 	);
 
-	const docID = ObjectId(accountID);
+	const docID = new ObjectId(accountID);
 	const operationResult = await model.updateOne({ _id: docID }, { accessLevel: newPrivilegeLevel });
 	return operationResult;
 }

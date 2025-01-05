@@ -16,7 +16,7 @@ const {
 
 	UpdatePassword,
 	RequestPasswordReset,
-	VerifyPasswordReset,
+	verifyPasswordReset,
 	UpdatePasswordFromReset,
 
 	VerifyAccount,
@@ -35,7 +35,7 @@ router.get("/resendVerify", ResendVerification);
 
 router.get("/verify", [validators.tokenQuery], VerifyAccount);
 
-router.get("/reset-password", oneOf(validators.tokenQuery, validators.accountIDQuery), VerifyPasswordReset);
+router.get("/reset-password", oneOf(validators.tokenQuery, validators.accountIDQuery), verifyPasswordReset);
 
 /* POST routers **************************************************************/
 

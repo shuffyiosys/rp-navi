@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const ObjectId = mongoose.Types.ObjectId;
 const { MODEL_NAMES } = require("../../models/model-names");
 const model = mongoose.model(MODEL_NAMES.CHARACTER);
 
@@ -15,7 +14,7 @@ const { RELATIONSHIP_TYPE } = require("../../data/character-data");
 async function CreateCharacter(characterName, accountID) {
 	let characterData = null;
 	try {
-		const ownerID = ObjectId(accountID);
+		const ownerID = new mongoose.Types.ObjectId(accountID);
 		logger.info(`${accountID} is attempting to create a character ${characterName}`);
 		characterData = await model.create({
 			characterName: characterName,
@@ -43,13 +42,13 @@ async function GetCharacterExists(characterName) {
  * @returns Array of character names
  */
 async function GetCharacterList(accountID) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	const characters = await model.find({ owner: ownerID }, "characterName -_id");
 	const list = [];
 	characters.forEach((entry) => {
 		list.push(entry.characterName);
 	});
-	return list.sort();
+	return list;
 }
 
 /**
@@ -58,7 +57,7 @@ async function GetCharacterList(accountID) {
  * @returns
  */
 async function GetCharacterCount(accountID) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	return model.count({ owner: ownerID });
 }
 
@@ -69,19 +68,23 @@ async function GetCharacterProfile(characterName) {
 	);
 }
 
-async function CheckOwnership(accountID, characterName) {
-	const ownerID = ObjectId(accountID);
+async function checkOwnership(characterName, accountID) {
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	return model.exists({ owner: ownerID, characterName: characterName }) !== null;
 }
 
-async function GetCharacterData(accountID, characterName) {
-	const ownerID = ObjectId(accountID);
+async function getOwner(characterName) {
+	return model.findOne({ characterName: characterName }, "owner");
+}
+
+async function getData(accountID, characterName) {
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	return model.findOne({ owner: ownerID, characterName: characterName });
 }
 
 async function UpdateProfile(accountID, characterName, updateData) {
 	try {
-		const ownerID = ObjectId(accountID);
+		const ownerID = new mongoose.Types.ObjectId(accountID);
 		const characterData = await model.findOne({ characterName: characterName, owner: ownerID });
 		if (characterData !== null) {
 			characterData.profileHtml = updateData.profileHtml;
@@ -106,7 +109,7 @@ async function UpdateProfile(accountID, characterName, updateData) {
  * @returns Number of modifications
  */
 async function AddFriendRequest(accountID, characterName, targetName) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	const characterData = await model.findOne({ owner: ownerID, characterName: characterName }, "friends");
 	const targetData = await model.findOne({ characterName: targetName }, "friends");
 
@@ -142,7 +145,7 @@ async function AddFriendRequest(accountID, characterName, targetName) {
  * @returns
  */
 async function GetFriendsList(accountID, characterName) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	const characterData = await model.findOne({ owner: ownerID, characterName: characterName }, "friends");
 
 	if (characterData === null) {
@@ -172,7 +175,7 @@ async function GetFriendsList(accountID, characterName) {
  * @returns
  */
 async function RemoveFriend(accountID, characterName, targetName) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	const characterData = await model.findOne({ owner: ownerID, characterName: characterName }, "friends");
 	const targetData = await model.findOne({ characterName: targetName }, "friends");
 
@@ -197,7 +200,7 @@ async function RemoveFriend(accountID, characterName, targetName) {
 }
 
 async function DeleteCharacter(characterName, accountID) {
-	const ownerID = ObjectId(accountID);
+	const ownerID = new mongoose.Types.ObjectId(accountID);
 	logger.info(`${accountID} is deleting their character ${characterName}`);
 	const deleteResult = await model.deleteOne({ characterName: characterName, owner: ownerID });
 	return deleteResult;
@@ -210,8 +213,9 @@ module.exports = {
 	GetCharacterList,
 	GetCharacterCount,
 	GetCharacterProfile,
-	CheckOwnership,
-	GetCharacterData,
+	checkOwnership,
+	getOwner,
+	getData,
 
 	UpdateProfile,
 

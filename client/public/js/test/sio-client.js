@@ -74,7 +74,7 @@ function getRoomInfo(roomName, characterName = "", modRequest = false) {
 	});
 }
 
-function getRoomData(roomName, characterName) {
+function GetRoomData(roomName, characterName) {
 	let getInfoData = {
 		roomName: roomName,
 	};

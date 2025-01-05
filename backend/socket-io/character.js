@@ -9,18 +9,18 @@ async function handleGetOwnedCharacters(socket, data) {
 	socket.emit("character list", characterList);
 
 	characterList.forEach((characterName) => {
-		characterRedisDb.addCharacterOwner(characterName, userId);
+		characterRedisDb.addOwner(characterName, userId);
 	});
 }
 
-async function handleGetCharacterData(socket, data) {
-	const characterData = await characterRedisDb.GetCharacterData(data.name);
+async function handlegetData(socket, data) {
+	const characterData = await characterRedisDb.getData(data.name);
 	socket.emit("character data", characterData);
 }
 
 async function connectHandlers(io, socket) {
 	socket.on("get owned characters", (data) => handleGetOwnedCharacters(socket, data));
-	socket.on("get character data", (data) => handleGetCharacterData(socket, data));
+	socket.on("get character data", (data) => handlegetData(socket, data));
 }
 
 module.exports = {

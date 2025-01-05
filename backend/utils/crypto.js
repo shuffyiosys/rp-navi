@@ -36,7 +36,7 @@ function getPasswordHash(password, salt) {
  * @param {*} password - "Plaintext" password
  * @returns A promise of a hashing function to be handled by the caller.
  */
-function VerifyPassword(passwordHash, password) {
+function verifyPassword(passwordHash, password) {
 	const hash = crypto.createHash("sha512");
 	hash.update(password);
 	return argon2.verify(passwordHash, hash.digest().toString("base64"));
@@ -52,6 +52,6 @@ function getMD5(input) {
 module.exports = {
 	generateKey,
 	getPasswordHash,
-	VerifyPassword,
+	verifyPassword,
 	getMD5,
 };

@@ -1,17 +1,26 @@
 const { Server } = require("socket.io");
 const { logger } = require("../utils/logger");
 
-const systemHandlers = require("../socket-io/system-event-handlers");
+// const systemHandlers = require("../socket-io/system-event-handlers");
 
 function load(server) {
 	let io = new Server(server, { cors: { origin: "*" } });
 
 	io.on("connection", async function (socket) {
+		const req = socket.request;
+
 		if ("userID" in socket.request.session) {
+			socket.emit("login status", { loggedIn: "userID" in socket.request.session });
 			connectHandlersSession(io, socket);
 		} else {
 			socket.on("logged in", () => {
-				connectHandlersSession(io, socket);
+				req.session.reload((err) => {
+					if (err) {
+						return socket.disconnect();
+					}
+					req.session.save();
+					connectHandlersSession(io, socket);
+				});
 			});
 		}
 	});
@@ -20,30 +29,31 @@ function load(server) {
 }
 
 const chatHandlers = require("../socket-io/chat-room");
-const dmHandlers = require("../socket-io/direct-message");
-const userHandlers = require("../socket-io/account");
 const characterHandlers = require("../socket-io/character");
-
-const userService = require("../services/redis/user-service");
+// const dmHandlers = require("../socket-io/direct-message");
+// const userHandlers = require("../socket-io/account");
+// const userService = require("../services/redis/user-service");
 
 async function connectHandlersSession(io, socket) {
-	const session = socket.request.session;
 	socket.emit("system message", "Welcome to RP Navi!");
-	socket.emit("login status", { loggedIn: "userID" in session });
 	logger.debug(`Socket ${socket.id} connected`);
 
 	// Check connections
-	await userService.setUserConnection(session.userID, socket.id);
+	// await userService.setUserConnection(session.userID, socket.id);
 
 	characterHandlers.connectHandlers(io, socket);
+	chatHandlers.connectHandlers(io, socket);
 	// userHandlers.connectHandlers(io, socket);
 	// dmHandlers.connectHandlers(io, socket);
-	chatHandlers.connectHandlers(io, socket);
 
 	// Handle disconnect
 	socket.on("disconnect", async () => {
-		chatHandlers.removeInRooms(io, socket);
+		chatHandlers.removeInRooms(socket);
 		logger.debug(`Socket ${socket.id} disconnected`);
+	});
+
+	socket.on("test sig", () => {
+		console.log(socket.nsp.adapter.rooms);
 	});
 }
 

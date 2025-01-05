@@ -1,5 +1,6 @@
 const expressSession = require("express-session");
 const cookieParser = require("cookie-parser");
+const { RedisStore } = require("connect-redis");
 
 const { logger, formatJson } = require("../utils/logger");
 
@@ -22,10 +23,9 @@ function setupMongoSession(app, serverConfig, mongoDbConfig) {
 }
 
 function setupRedisSession(app, serverConfig, redisClient) {
-	const connectRedis = require("connect-redis");
-	const redisStore = connectRedis(expressSession);
 	logger.info(`Using Redis sessioning`);
-	return createSessionStore(app, serverConfig, new redisStore({ client: redisClient }));
+	let redisStore = new RedisStore({ client: redisClient });
+	return createSessionStore(app, serverConfig, redisStore);
 }
 
 function createSessionStore(app, serverConfig, store = null) {

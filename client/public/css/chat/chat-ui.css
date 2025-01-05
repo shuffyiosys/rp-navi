@@ -1,47 +1,64 @@
 :root {
-    --main-dark-color: #181C14;
-    --sub-dark-color: #3C3D37;
-    --lite-dark-color: #697565;
-    --light-color: #ECDFCC;
+	--main-dark-color: #181c14;
+	--sub-dark-color: #3c3d37;
+	--lite-dark-color: #697565;
+	--light-color: #ecdfcc;
 }
 
 #page-header {
-    height: 64px;
-    background-color: var(--main-dark-color);
+	height: 64px;
+	background-color: var(--main-dark-color);
 }
 
 #left-navbar {
-    height: 100%;
-    overflow-y: scroll;
-    background: var(--sub-dark-color);
+	height: 100%;
+	overflow-y: scroll;
+	background: var(--sub-dark-color);
 }
 
 #chat-page {
-    display: flex;
-    flex-direction: column;
+	display: flex;
+	flex-direction: column;
 }
 
 #chat-page > div#chat-messages {
-    flex-grow: 1;
-    overflow: hidden;
-    border-radius: 8px;
+	flex-grow: 1;
+	overflow: hidden;
+	border-radius: 8px;
 }
 
 .msg-page {
-    background: var(--sub-dark-color);
-    height: 100%;
-    overflow-y: scroll;
-    padding: 10px;
-    display: none;
+	background: var(--sub-dark-color);
+	height: 100%;
+	overflow-y: scroll;
+	padding: 10px;
+	display: none;
 }
 
 .msg-page[selected="yes"] {
-    display: block;
+	display: block;
 }
 
 #chat-input {
-    background: var(--sub-dark-color);
-    margin-top: 8px;
-    border-radius: 8px;
-    padding: 10px;
+	background: var(--sub-dark-color);
+	margin-top: 8px;
+	border-radius: 8px;
+	padding: 10px;
+}
+
+#right-navbar {
+	height: 100%;
+	overflow-y: scroll;
+}
+
+.user-list {
+	display: none;
+	border-radius: 8px;
+	height: 100%;
+	padding: 8px;
+	background-color: var(--sub-dark-color);
+}
+
+.user-list[selected="yes"] {
+	display: block;
 }

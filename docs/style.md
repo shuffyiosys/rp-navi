@@ -10,18 +10,31 @@ While this project doesn't aim to have MISRA-C or NASA's Power of Ten levels of 
 
     This ensures that data is only used where it's actually necessary. In addition, it gives the best context where that data's being used.
 
--   **Don't pull object members out into local-scope variables**
+-   **Use object destructuring when dealing with object argumnets**
 
-    e.g., don't do this
+    Example:
 
     ```JavaScript
-        function (dataObject) {
-            const foobar = dataObject.foobar;
-            const fizzbuzz = dataOjbect.fizzbuzz;
+        // bad
+        function getFullName(user) {
+            const firstName = user.firstName;
+            const lastName = user.lastName;
+            return `${firstName} ${lastName}`;
+        }
+
+        // good
+        function getFullName(user) {
+            const { firstName, lastName } = user;
+            return `${firstName} ${lastName}`;
+        }
+
+        // best
+        function getFullName({ firstName, lastName }) {
+            return `${firstName} ${lastName}`;
         }
     ```
 
-    This can create confusion as to where the data came from. This also minimizes the number of variables in a scope, which means less things to keep track of.
+    This also helps contain the context in which parts of the object is used.
 
 -   **`const` should be the default**
 
@@ -63,27 +76,57 @@ While this project doesn't aim to have MISRA-C or NASA's Power of Ten levels of 
 
     This helps describe what a variable is and what a function does before comments are needed.
 
--   **camelCase for variable and data member names**
+-   **camelCase when naming variables, object instances, or functions**
 
-    With JavaScript, camelCase is the most common naming standard. Since this codebase relies on dependencies, it would look weird to mix naming styles.
+    Most style guides for JavaScript use camelCase for these.
 
--   **PascalCase for function, method, class, and data structure names**
+-   **PascalCase for classes**
 
-    Makes it easier to see at a glance what's what.
+    Similar reason with using camelCase.
 
 -   **Do not abbrivate names**
 
     If abbreviation is done to shorten a name, then it's time to 1. rethink how to describe the thing being named and/or 2. break out the thesaurus.
 
--   **Maintain capitalization for acronyms**
+-   **Maintain capitalization for abbreviations/acronyms if that's how it's usually written out**
 
     Because `Json` looks odd when it's `JSON`
+
+-   **Don't add unnecessary context**
+
+    For example, this is excessive as the context for each data member of `Car` is implied
+
+    ```
+        const Car = {
+            carMake: "Honda",
+            carModel: "Accord",
+            carColor: "Blue"
+        };
+
+        function paintCar(car, color) {
+            car.carColor = color;
+        }
+    ```
+
+    Instead, do this:
+
+    ```
+        const Car = {
+            make: "Honda",
+            model: "Accord",
+            color: "Blue"
+            };
+
+        function paintCar(car, color) {
+            car.color = color;
+        }
+    ```
 
 ### Spacing
 
 -   **Tabs for indentation, spaces for alignment**
 
-    Tabs are customizable, though the code was developed using 4-space tabs. Plus some IDEs don't space based indentation as indents, so you have to move the cursor keys over the spaces
+    Tabs are customizable, though the code was developed using 4-space tabs.
 
 -   **Lines stop at 120 characters**
 
@@ -128,7 +171,7 @@ While this project doesn't aim to have MISRA-C or NASA's Power of Ten levels of 
 
 -   **Consider DRY judiciously**
 
-    Repeating yourself once is fine. Repeating yourself twice might need consideration. Repeating yourself thrice would make it likely this is good, but remember: the _same_ things must be done.
+    Repeating yourself once is fine. Repeating yourself twice might need consideration. Repeating yourself thrice would be a strong candidate for making it a function. But remember: the _same_ things must be done.
 
 -   **End all statements with a semicolon**
 
