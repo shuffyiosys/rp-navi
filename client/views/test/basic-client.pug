@@ -1,0 +1,67 @@
+doctype html
+html 
+	head
+		title="Index"
+		script(src="/js/test/basic-client.js" defer)
+		link(rel="stylesheet" href="/css/index.css")
+		link(rel="stylesheet" href="/css/common.css")
+	body 
+		div.card.main-card(style="width:40vw;")
+			div.card-item 
+				a(href="chat" target="_blank" rel="noopener noreferrer") Chat link
+				hr
+				div.form-style
+					label Email
+					input#email-input(type="email" name="email-input")
+					label#email-error.warning(style="display: none;") &#8203;
+					br
+					label Password
+					input#password-input(type="password" name="password-input")
+					label#password-error.warning(style="display: none;") &#8203;
+					br
+					br
+					button#signupSubmit.btn.btn-primary Sign up
+					button#loginSubmit.btn.btn-primary Login
+					button#forgotPassword.btn.btn-primary Forgot Password
+					br
+					hr
+					label Reset password:
+					input#resetPasswordInput(type="password" name="reset-password-input")
+					br
+					label Reset token:
+					input#resetTokenInput(type="text")
+					button#resetPasswordBtn Reset Password
+				hr
+				div.form-style
+					p Account Actions
+					button#logOutBtn.btn.btn-primary Logout 
+					button#getData.btn.btn-primary Get account data
+					button#getVerification.btn.btn-primary Resend Verification
+					br
+					br
+					label Change Email: 
+					input#newEmailInput(type="email")
+					button#UpdateEmail.btn.btn-primary Update
+					br
+					br
+					label Change Password:
+					input#newPasswordInput(type="password")
+					button#updatepasswordBtn.btn.btn-primary Update
+					br
+					br
+					button#deleteAccountBtn.btn.btn-danger Delete Account
+				div.form-style
+					p Character Actions
+					button#getCharactersBtn Get characters
+					br
+					br
+					label Create character: 
+					input#newCharacterInput(type="text")
+					button#newCharacter Create
+					br
+					br
+					div#characterList
+						div.flex-container
+				div.form-style
+					p Messages
+					ul#statusMessage

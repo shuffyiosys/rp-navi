@@ -2,10 +2,10 @@ doctype html
 html 
 	head
 		title="Advanced profile editor"
-		link(rel="stylesheet", href="/css/common.css")
-		link(rel="stylesheet", href="/css/editor-advanced.css")
+		link(rel="stylesheet" href="/css/common.css")
+		link(rel="stylesheet" href="/css/character/editor-advanced.css")
 		script(src="/js/utilities.js" referrerpolicy="origin")
-		script(src="/js/editor-advanced.js" referrerpolicy="origin")
+		script(src="/js/character/editor-advanced.js" referrerpolicy="origin")
 	body 
 		div.header
 			h2 Editing character: #{data.name}
@@ -21,13 +21,13 @@ html
 				textarea#editor-css(name="css-source" rows=10)
 				p 
 					| #[strong Note:] Profiles are in a #[code div#profile-container] container with a width of 750px
-				
+
 
 			div.source-item
 				p
 					strong JavaScript
 				textarea#editor-js(name="js-source" rows=10)
-				input#include-jquery-checkbox(type="checkbox", name="include-jquery")
+				input#include-jquery-checkbox(type="checkbox" name="include-jquery")
 				label(for="include-jquery") Include jQuery
 		div.output
 			iframe#preview-iframe
@@ -35,7 +35,7 @@ html
 			div
 				a(href="/character/editor?character=" + data.name) Basic editor
 				a(href="/character/editor-help" target="_blank" title="Help page" style="margin-left: 0.5rem;")
-					img(src="/img/icons8-help-100.png", alt="Help", srcset="" height="16px")
+					img(src="/img/icons8-help-100.png" alt="Help" srcset="" height="16px")
 			div(style="text-align: right;")
 				button#refresh-button.btn Refresh Preview
 				button#submit-btn.btn.btn-primary Submit

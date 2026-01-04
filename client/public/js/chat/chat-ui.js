@@ -67,7 +67,7 @@ function cssName(name) {
 	return name.toLowerCase().replaceAll(" ", "-");
 }
 
-function CreateMessagePage(roomName) {
+function createMessagePage(roomName) {
 	roomName = cssName(roomName);
 
 	if (document.getElementById(`${roomName}-page`) !== null) {
@@ -76,6 +76,23 @@ function CreateMessagePage(roomName) {
 
 	const newPage = document.createElement("div");
 	newPage.id = `${roomName}-page`;
+	newPage.classList.add("msg-page");
+
+	const pagesContainer = document.getElementById("chat-messages");
+	pagesContainer.appendChild(newPage);
+}
+
+function createPMMessagePage(recipient, sender) {
+	const roomName = `pm-${cssName(recipient)}`;
+
+	if (document.getElementById(`${roomName}-page`) !== null) {
+		return;
+	}
+
+	const newPage = document.createElement("div");
+	newPage.id = `${roomName}-page`;
+	newPage.setAttribute("data-recipient", recipient);
+	newPage.setAttribute("data-sender", sender);
 	newPage.classList.add("msg-page");
 
 	const pagesContainer = document.getElementById("chat-messages");
@@ -264,6 +281,19 @@ function JoinRandomBtnHandler() {
 		rooms[Math.floor(Math.random() * rooms.length)],
 		characters[Math.floor(Math.random() * characters.length)]
 	);
+}
+
+/**
+ * 1 - Create a message page for PMs
+ * 2 - Switch to new page
+ */
+function newPMBtnHandler() {
+	const recipient = document.getElementById("new-pm-name-input").value;
+	const characterSelect = document.getElementById("character-select");
+	const sender = characterSelect[characterSelect.selectedIndex].value;
+
+	createPMMessagePage(recipient, sender);
+	SwitchMessagePage(`pm-${cssName(recipient)}`);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

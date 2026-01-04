@@ -45,7 +45,7 @@ async function CreateAccount(email, password) {
  * @param {String} email Email address of the user
  * @returns True/False if the account exists
  */
-async function GetAccountExists(email) {
+async function accountExistsByUsername(email) {
 	return await model.exists({ email: email });
 }
 
@@ -79,31 +79,9 @@ async function GetAccountDataByEmail(email) {
  * @param {String} password Password for authentication
  * @returns
  */
-async function AuthenticateUser(password, identification, type) {
-	logger.debug(`Authenticating user ${identification}, ${type}`);
-	let accountData = null;
-	const fields = `_id password status accessLevel`;
+async function AuthenticateUser(accountData, password) {
 	const response = { id: -1, status: AUTHENTICATION_RESULT.GENERAL_ERROR };
-
-	if (type == "ID") {
-		const docID = ObjectId(identification);
-		accountData = await model.findOne({ _id: docID }, fields);
-	} else if (type == "email") {
-		accountData = await model.findOne({ email: identification }, fields);
-	} else {
-		return response;
-	}
-
-	logger.debug(`${formatJson(accountData)}`);
-	if (accountData === null) {
-		return response;
-	} else if (accountData.accessLevel === ACCESS_LEVEL.BANNED) {
-		response.status = AUTHENTICATION_RESULT.BANNED;
-		return response;
-	}
-
 	const correctPassword = await crypto.verifyPassword(accountData.password, password);
-	logger.debug(`Correct password: ${correctPassword}`);
 	if (!correctPassword) {
 		return response;
 	} else if (accountData.status == ACCOUNT_STATE.NEED_NEW_PASSOWRD) {
@@ -113,6 +91,38 @@ async function AuthenticateUser(password, identification, type) {
 		response.id = accountData._id;
 		response.status = AUTHENTICATION_RESULT.SUCCESS;
 		return response;
+	}
+}
+
+async function authenticateByEmail(email, password) {
+	logger.debug(`Authenticating user ${email}`);
+	let accountData = null;
+	const response = { id: -1, status: AUTHENTICATION_RESULT.GENERAL_ERROR };
+	accountData = await model.findOne({ email: email }, `_id password status accessLevel`);
+
+	if (accountData === null) {
+		return response;
+	} else if (accountData.accessLevel === ACCESS_LEVEL.BANNED) {
+		response.status = AUTHENTICATION_RESULT.BANNED;
+		return response;
+	} else {
+		return await AuthenticateUser(accountData, password);
+	}
+}
+
+async function authenticateByID(userID, password) {
+	logger.debug(`Authenticating user ${userID}`);
+	let accountData = null;
+	const response = { id: -1, status: AUTHENTICATION_RESULT.GENERAL_ERROR };
+	const docID = ObjectId(userID);
+	accountData = await model.findOne({ _id: docID }, `_id password status accessLevel`);
+	if (accountData === null) {
+		return response;
+	} else if (accountData.accessLevel === ACCESS_LEVEL.BANNED) {
+		response.status = AUTHENTICATION_RESULT.BANNED;
+		return response;
+	} else {
+		return await AuthenticateUser(accountData, password);
 	}
 }
 
@@ -248,11 +258,13 @@ async function UpdateAccountPrivilegeLevel(accountID, newPrivilegeLevel) {
 module.exports = {
 	CreateAccount,
 
-	GetAccountExists,
+	accountExistsByUsername,
 	accountExistsById,
 	GetAccountDataByID,
 	GetAccountDataByEmail,
 	AuthenticateUser,
+	authenticateByEmail,
+	authenticateByID,
 
 	UpdateEmail,
 	UpdatePassword,

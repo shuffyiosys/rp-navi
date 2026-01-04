@@ -2,12 +2,12 @@ doctype html
 html 
 	head
 		title Profile editor
-		link(rel="stylesheet", href="/css/common.css")
-		link(rel="stylesheet", href="/css/editor-basic.css")
+		link(rel="stylesheet" href="/css/common.css")
+		link(rel="stylesheet" href="/css/character/editor-basic.css")
 
 		script(src="/js/tinymce/tinymce.min.js" referrerpolicy="origin")
 		script(src="/js/utilities.js" referrerpolicy="origin") 
-		script(src="/js/editor-basic.js" referrerpolicy="origin")
+		script(src="/js/character/editor-basic.js" referrerpolicy="origin")
 	body 
 		div.header
 			h2 Editing character: #{data.name}
@@ -18,7 +18,7 @@ html
 				div
 					a(href="/character/editor-advanced?character=" + data.name) Advanced editor
 					a(href="/character/editor-help" target="_blank" title="Help page" style="margin-left: 0.5rem;")
-						img(src="/img/icons8-help-100.png", alt="Help", srcset="" height="16px")
+						img(src="/img/icons8-help-100.png" alt="Help" srcset="" height="16px")
 				div(style="text-align: right;")
 					button#submit-editor-btn.btn.btn-primary Submit
 

@@ -24,10 +24,8 @@ async function CreateAccount(req, res) {
 	if (!errors.isEmpty()) {
 		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
 		return;
-	} else if (await accountService.GetAccountExists(req.body.email)) {
-		const ip = (req.headers["x-forwarded-for"] || req.connection.remoteAddress || "")
-			.split(",")[0]
-			.trim();
+	} else if (await accountService.accountExistsByUsername(req.body.email)) {
+		const ip = (req.headers["x-forwarded-for"] || req.connection.remoteAddress || "").split(",")[0].trim();
 		logger.info(`${ip} tried creating an account with already used email ${req.body.email} `);
 		res.json({
 			type: `error`,
@@ -52,11 +50,7 @@ async function GetAccountPage(req, res) {
 		res.redirect(`/`);
 	} else {
 		const accountData = await accountService.GetAccountDataByID(req.session.userID);
-		const pageData = new PageRenderParams(
-			`Account page for ${accountData.email}`,
-			accountData,
-			res.locals
-		);
+		const pageData = new PageRenderParams(`Account page for ${accountData.email}`, accountData, res.locals);
 		res.render(`account/index`, pageData);
 	}
 }
@@ -88,6 +82,7 @@ async function LogoutAccount(req, res) {
 }
 
 async function LoginAccount(req, res) {
+	const { email, password } = req.body;
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
@@ -97,8 +92,8 @@ async function LoginAccount(req, res) {
 		return;
 	}
 
-	const response = await accountService.AuthenticateUser(req.body.password, req.body.email, "email");
-	logger.debug(`User ${req.body.email} is logging in, result ${formatJson(response)}`);
+	const response = await accountService.authenticateByEmail(email, password);
+	logger.debug(`User ${email} is logging in, result ${formatJson(response)}`);
 	if (response.status === AUTHENTICATION_RESULT.BANNED) {
 		res.json(new AjaxResponse(false, `User is banned`, {}));
 	} else if (response.status === AUTHENTICATION_RESULT.GENERAL_ERROR) {
@@ -125,6 +120,8 @@ async function LoginAccount(req, res) {
 
 /** Core update handlers ************************************************** */
 async function UpdateEmail(req, res) {
+	const { password } = req.body;
+	const { userID } = req.session;
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
@@ -134,13 +131,13 @@ async function UpdateEmail(req, res) {
 		return;
 	}
 
-	const emailInUse = await accountService.GetAccountExists(req.body.newEmail);
+	const emailInUse = await accountService.accountExistsByUsername(req.body.newEmail);
 	if (emailInUse) {
 		res.json(new AjaxResponse(false, `This email is already in use`, errors.array()));
 		return;
 	}
 
-	const response = await accountService.AuthenticateUser(req.body.password, req.session.usrID, "ID");
+	const response = await accountService.authenticateByID(userID, password);
 	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		const updateData = await accountService.UpdateEmail(req.session.userID, req.body.newEmail);
 		res.json(new AjaxResponse(true, JSON.stringify(updateData), updateData));
@@ -150,6 +147,8 @@ async function UpdateEmail(req, res) {
 }
 
 async function UpdatePassword(req, res) {
+	const { password } = req.body;
+	const { userID } = req.session;
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.json(new AjaxResponse(false, `Errors with input`, errors.array()));
@@ -159,7 +158,7 @@ async function UpdatePassword(req, res) {
 		return;
 	}
 
-	const response = await accountService.AuthenticateUser(req.body.password, req.session.userID, "ID");
+	const response = await accountService.authenticateByID(userID, password);
 	if (response.status === AUTHENTICATION_RESULT.SUCCESS) {
 		const updateData = await accountService.UpdatePassword(req.session.userID, req.body.newPassword);
 		res.json(new AjaxResponse(true, JSON.stringify(updateData), updateData));
@@ -289,6 +288,8 @@ async function ResendVerification(req, res) {
 
 /** Delete handler **********************************************************/
 async function DeleteAccount(req, res) {
+	const { password } = req.body;
+	const { userID } = req.session;
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		res.json(new AjaxResponse(false, `Error with input`, errors));
@@ -298,7 +299,7 @@ async function DeleteAccount(req, res) {
 		return;
 	}
 
-	const authResponse = await accountService.AuthenticateUser(req.body.password, req.session.userID, "ID");
+	const authResponse = await accountService.authenticateByID(userID, password);
 	if (authResponse.status === AUTHENTICATION_RESULT.NEED_NEW_PASSWORD) {
 		const pageData = new PageRenderParams(
 			`Reset password`,

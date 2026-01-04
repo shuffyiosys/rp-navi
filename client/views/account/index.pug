@@ -2,18 +2,18 @@ doctype html
 html 
 	head
 		title=title
-		link(rel="stylesheet", href="/css/common.css")
-		link(rel="stylesheet", href="/css/account/index.css")
+		link(rel="stylesheet" href="/css/common.css")
+		link(rel="stylesheet" href="/css/account/index.css")
 
 		script(src="/js/utilities.js")
 		script(src="/js/account/index.js" defer)
 	body 
-	
-		div.card.dark-theme.main-card
+
+		div.card.main-card
 			div.form-style
 				h2(style="margin-bottom: 2rem;") Account information
 				p Email: #{data.email} 
-				
+
 				p Current password #[span(style="font-size: 0.75rem") (required to update email or password)]
 				input#password-input(type="password" name="new-password-input")
 				p#password-error.error-label &#8203;
@@ -35,7 +35,7 @@ html
 				br
 				p#error-message.error-label
 				label(for="advanced-editor-checkbox" style="margin-right: 0.5rem;") Default to advanced profile editor
-				input#advanced-editor-checkbox(type="checkbox", name="advanced-editor")
+				input#advanced-editor-checkbox(type="checkbox" name="advanced-editor")
 
 			div.form-style
 				h2 Characters

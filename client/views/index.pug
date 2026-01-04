@@ -2,8 +2,8 @@ doctype html
 html 
 	head
 		title="Index"
-		link(rel="stylesheet", href="/css/common.css")
-		link(rel="stylesheet", href="/css/index.css")
+		link(rel="stylesheet" href="/css/common.css")
+		link(rel="stylesheet" href="/css/index.css")
 		script(src="/js/utilities.js")
 		unless data.loggedIn
 			script(src="/js/index.js" defer)
@@ -11,27 +11,26 @@ html
 			script(src="/js/index-logged-in.js" defer)
 
 	body 
-		div.card.dark-theme.main-card
+		div.card.main-card
 			div.card-item 
 				h2 Welcome to RP Navi!
 				p A place where you can create characers and roleplay or something.
-				
-			div.card-item
+				hr
 				unless data.loggedIn
 					div.form-style
-						h2(style="margin-bottom: 3rem;") Log in
+						h2 Log in
 						label Email
 						input#email-input(type="email" name="email-input")
-						label#email-error.error-label &#8203;
+						label#email-error.warning(style="display: none;") &#8203;
 						label Password
 						input#password-input(type="password" name="password-input")
-						label#password-error.error-label &#8203;
+						label#password-error.warning(style="display: none;") &#8203;
 						p 
 							a#forgot-pw-btn(href="/forgot-password") Forgot Password?
 						br
-						label#error-message.error-label &#8203;
+						label#error-message.warning(style="display: none;") &#8203;
 						p(style="text-align:right;")
-							button#create-account-btn.btn.btn-secondary Create account
+							button#create-account-btn.btn.btn-primary Create account
 							button#login-btn.btn.btn-primary Login
 				else 
 					p Welcome!

@@ -1,6 +1,7 @@
-const { getCharacterOwner } = require(`../services/redis/character-service`);
 const { logger, formatJson } = require(`../utils/logger`);
 const { SocketIoResponse } = require(`../classes/socket-io-response`);
+const { getCharacterOwner, getData } = require(`../services/redis/character-service`);
+const { verifyUserOwnsCharacter } = require(`../services/redis/character-service`);
 
 async function checkCharactersExist(fromCharacter, toCharacter) {
 	const requesterData = await getData(fromCharacter);
@@ -26,7 +27,7 @@ async function mainHandler(socket, data, eventHandler) {
 	const userId = socket.request.session.userID;
 	const userOwnsCharacter = await verifyUserOwnsCharacter(userId, fromCharacter);
 	logger.debug(`${userId} owns ${fromCharacter}? ${userOwnsCharacter}`);
-	if (userOwnsCharacter == false) {
+	if (!userOwnsCharacter) {
 		return status;
 	}
 

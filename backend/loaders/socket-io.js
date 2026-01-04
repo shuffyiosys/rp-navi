@@ -29,19 +29,15 @@ function load(server) {
 }
 
 const chatHandlers = require("../socket-io/chat-room");
-const characterHandlers = require("../socket-io/character");
 // const dmHandlers = require("../socket-io/direct-message");
 // const userHandlers = require("../socket-io/account");
-// const userService = require("../services/redis/user-service");
+const { setUserConnection, removeUserConnection } = require("../services/redis/user-service");
 
 async function connectHandlersSession(io, socket) {
 	socket.emit("system message", "Welcome to RP Navi!");
 	logger.debug(`Socket ${socket.id} connected`);
 
-	// Check connections
-	// await userService.setUserConnection(session.userID, socket.id);
-
-	characterHandlers.connectHandlers(io, socket);
+	setUserConnection(socket.request.session.userID, socket.id);
 	chatHandlers.connectHandlers(io, socket);
 	// userHandlers.connectHandlers(io, socket);
 	// dmHandlers.connectHandlers(io, socket);
@@ -49,6 +45,7 @@ async function connectHandlersSession(io, socket) {
 	// Handle disconnect
 	socket.on("disconnect", async () => {
 		chatHandlers.removeInRooms(socket);
+		removeUserConnection(socket.request.session.userID, socket.id);
 		logger.debug(`Socket ${socket.id} disconnected`);
 	});
 

@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function (arg) {
 			selector: "#editor",
 			license_key: "gpl",
 			height: "100%",
-			width: 770,
+			width: "100%",
 			content_css: ["/css/character/profile-iframe-common.css"],
 			plugins: [
 				"advlist",

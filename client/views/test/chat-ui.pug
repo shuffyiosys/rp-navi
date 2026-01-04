@@ -1,0 +1,163 @@
+doctype html
+html 
+head
+	title="Chat Test"
+	link(rel="stylesheet" href="/css/common.css")
+	link(rel="stylesheet" href="/css/chat/chat-ui.css")
+
+	script(src="/js/test/chat-test.js" defer)
+body
+	dialog#login-dialog
+		.dialog-container
+			.dialog-header Login
+			.dialog-content
+				form.form-style
+					label Username
+					input(type="text")
+
+					label Password
+					input(type="password")
+					#forgot-password-link Forgot password
+
+					label#email-label Email
+					input#email-input(type="email")
+			.dialog-footer
+				button.btn.btn-secondary Sign up
+				button.btn.btn-success Login
+	dialog#main-settings.tabbed-dialog
+		.dialog-container
+			.dialog-header Settings
+			.dialog-tab-container
+				.dialog-tab#account-tab Account
+				.dialog-tab#display-tab Display
+				.dialog-tab#blocked-tab Blocked
+			.dialog-page-container 
+				.dialog-page#account-page This is the account settings page 
+				.dialog-page#display-page This is the display settings page
+				.dialog-page#blocked-page This is the blocked users settings page
+			.dialog-footer
+				button.btn.btn-success Save
+	dialog#room-settings.tabbed-dialog
+		.dialog-container
+			.dialog-header Room Settings
+			.dialog-tab-container
+				.dialog-tab#room-main-tab Main settings
+				.dialog-tab#banned-tab Banned
+			.dialog-page-container 
+				.dialog-page#room-main-page This is the main settings for the room
+				.dialog-page#banned-page This shows who's banned
+			.dialog-footer
+				button.btn.btn-success Save
+	dialog#new-room-dialog
+		.dialog-container
+			.dialog-header Create new room
+			.dialog-content
+				form.form-style
+					label Room name
+					#input-room-name.dialog-input(data-placeholder="Room name" contenteditable)
+
+					hr
+					label Summary
+					#new-room-summary.dialog-input(data-placeholder="Short description that shows in header" contenteditable)
+
+					hr
+					label Description
+					#new-room-description.dialog-input(data-placeholder="Longer description that shows in the info page" style="height: 80px;overflow-y: auto;" contenteditable)
+
+					hr
+					label Password (optional)
+					#new-room-password.dialog-input(data-placeholder="Password for the room" contenteditable)
+
+					hr
+					label Private 
+					input(type="checkbox")
+
+			.dialog-footer
+				button.btn.btn-success Create Room
+
+	#user-context-menu.context-menu(tabindex="-1")
+		.menu-item.item-separator Some status here
+		.menu-item View profile
+		.menu-item Direct message
+		.menu-item.item-separator
+			img(src="/img/heart.svg" height="16px" alt="")
+			span Friend
+		.menu-item
+			img(src="/img/minus-circle.svg" height="16px" alt="")
+			span Block
+	#room-context-menu.context-menu
+		.menu-item.item-separator Short description here
+		.menu-item View room page
+		.menu-item
+			img(src="/img/bookmark.svg" height="16px" alt="")
+			span Favorite room
+	#join-context-menu.context-menu
+		.menu-item Character 1
+		.menu-item Character 2
+		.menu-item Character 3
+	#chat-container
+		#left-navbar
+			.collapsible-group
+				header Direct Messages
+			.collapsible-group
+				header Something in here
+				.collapsible-item-group 
+					.collapsible-item A room 1
+					.collapsible-item A room 2
+			.collapsible-group.collapsed
+				header Collapsed
+				.collapsible-item-group 
+					.collapsible-item A room 1
+					.collapsible-item A room 2
+			.collapsible-group
+				header Something in here
+				.collapsible-item-group
+					.collapsible-item A room 1
+					.collapsible-item A room 2
+			#left-bottom-buttons
+				div#settings-button.flat-btn.glyph-btn(title="User settings")
+					img(src="/img/user.svg" alt="User settings")
+		#main-body
+			#room-header
+				#room-title.bottom-align Room Title
+				#room-description.bottom-align This is a description of the room
+				#room-options.bottom-align
+					div#room-settings-button.flat-btn.glyph-btn(title="Room settings")
+						img(src="/img/settings.svg" height="24px" alt="Room settings")
+					div#hide-nav-button.flat-btn.glyph-btn(title="Toggle room list visibility")
+						img(src="/img/users.svg" height="24px" alt="Toggle room/user list")
+			#messages-container
+				p Chat messages
+			#message-input-container
+				div#message-input(data-placeholder="Enter your text here..." contenteditable)
+		#right-navbar
+			#room-list-header.bottom-align
+				#right-navbar-header Public rooms 
+				#new-room-button.flat-btn + New Room
+			.collapsible-group
+				#room-tab-header 
+					.room-tab-name This is a room
+					.room-join 
+						img.flat-btn#room-settings-button(src="/img/user-plus.svg" height="24px" alt="Join Room")
+				.collapsible-item-group 
+					.collapsible-item User 1
+					.collapsible-item User 2
+					.collapsible-item User 3
+			.collapsible-group
+				header This is another room
+				.collapsible-item-group 
+					.collapsible-item.user-item User 1
+					.collapsible-item.user-item User 2
+					.collapsible-item.user-item User 3
+			.collapsible-group.collapsed
+				header Collapsed
+				.collapsible-item-group 
+					.collapsible-item User 1
+					.collapsible-item User 2
+					.collapsible-item User 3
+			.collapsible-group
+				header Yet another room
+				.collapsible-item-group 
+					.collapsible-item User 1
+					.collapsible-item User 2
+					.collapsible-item User 3

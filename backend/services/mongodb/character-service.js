@@ -82,6 +82,10 @@ async function getData(accountID, characterName) {
 	return model.findOne({ owner: ownerID, characterName: characterName });
 }
 
+async function getID(characterName) {
+	return model.findOne({ characterName: characterName }, "_id");
+}
+
 async function UpdateProfile(accountID, characterName, updateData) {
 	try {
 		const ownerID = new mongoose.Types.ObjectId(accountID);
@@ -216,6 +220,7 @@ module.exports = {
 	checkOwnership,
 	getOwner,
 	getData,
+	getID,
 
 	UpdateProfile,
 

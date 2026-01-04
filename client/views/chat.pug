@@ -51,13 +51,14 @@ html(style="height:100%")
 					div.input-group
 						span.input-group-text User
 						input#new-pm-name-input.form-control(type="text")
-						button#new-pm-btn.btn.btn-light(onclick="NewPMBtnHandler()") Start PM
+						button#new-pm-btn.btn.btn-light(onclick="newPMBtnHandler()") Start PM
 					hr
 					//- Room selection
 					h3 Room "Tabs"
 					div.form-floating.input-group
 						select#room-select.form-select(onchange="RoomSelectHandler()")
-							option#console-page(value="system-msgs") Console
+							option#console-page(value="console-msgs") Console
+							option#pm-page(value="pm-msgs") Private Messages
 						label(for="room-select") Room
 						button#leave-room-btn.btn.btn-light(onclick="LeaveRoomBtnHandler()" disabled) Leave
 					hr
@@ -78,7 +79,8 @@ html(style="height:100%")
 				div#chat-page.col-sm-8.p-3.bg-dark.text-white(style="height: 100%;")
 					p#chat-msgs-label
 					div#chat-messages
-						div#system-msgs-page.msg-page(selected="yes")
+						div#console-msgs-page.msg-page(selected="yes")
+						div#pm-msgs-page.msg-page
 					div#chat-input-container
 						textarea#chat-input(style="width: 100%")
 				div#right-navbar.col-sm-2.p-3.bg-dark.text-white

@@ -1,27 +1,4 @@
-const { logger, formatJson } = require(`../utils/logger`);
-const { SocketIoResponse } = require(`../classes/socket-io-response`);
-const characterMongoDb = require(`../services/mongodb/character-service`);
-const characterRedisDb = require(`../services/redis/character-service`);
-
-async function handleGetOwnedCharacters(socket, data) {
-	const userId = socket.request.session.userID;
-	const characterList = await characterMongoDb.GetCharacterList(userId);
-	socket.emit("character list", characterList);
-
-	characterList.forEach((characterName) => {
-		characterRedisDb.addOwner(characterName, userId);
-	});
-}
-
-async function handlegetData(socket, data) {
-	const characterData = await characterRedisDb.getData(data.name);
-	socket.emit("character data", characterData);
-}
-
-async function connectHandlers(io, socket) {
-	socket.on("get owned characters", (data) => handleGetOwnedCharacters(socket, data));
-	socket.on("get character data", (data) => handlegetData(socket, data));
-}
+async function connectHandlers(io, socket) {}
 
 module.exports = {
 	connectHandlers,

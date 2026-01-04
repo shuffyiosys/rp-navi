@@ -7,14 +7,16 @@ const charactersInRooms = {};
 const joinedRooms = {};
 const roomsList = new Set();
 
+let blockedList = new Set();
+
 document.addEventListener("DOMContentLoaded", (arg) => {
 	function defaultHandler(response) {
-		// TODO: How do we handle server disconnection/reconnection?
 		console.log(response);
 	}
 
 	/* System events */
 	socket.on("connect", () => {
+		// TODO: How do we handle server disconnection/reconnection?
 		console.log("Connected:", socket.id);
 	});
 
@@ -34,15 +36,36 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		UpdateConsole(resp);
 	});
 
-	/* Account events */
+	/* Account events ********************************************************/
 	socket.on("user status update", (resp) => console.log("Handling user status update", resp));
-	socket.on("friend requested", (resp) => console.log("Handling friend request", resp));
+	socket.on("friend requested", (resp) => {
+		console.log("Handling friend requested", resp);
 
-	/* DM events */
-	socket.on("dm message", (resp) => console.log("Handling DM received", resp));
-	socket.on("dm status", (resp) => console.log("Handling DM status", resp));
+		const { fromUser } = resp;
+		if (!blockedList.has(fromUser)) {
+			console.log(`Direct message from ${fromUser}: ${message}`);
+		}
+	});
+	/* DM events *************************************************************/
+	socket.on("dm message", (resp) => {
+		console.log("Handling DM received", resp);
 
-	/* Chat room events */
+		const { fromUser, message } = resp;
+		if (!blockedList.has(fromUser)) {
+			console.log(`Direct message from ${fromUser}: ${message}`);
+		}
+	});
+
+	socket.on("dm status", (resp) => {
+		console.log("Handling DM status", resp);
+
+		const { fromUser, newStatus } = resp;
+		if (!blockedList.has(fromUser)) {
+			console.log(`DM status from ${fromUser}: ${newStatus}`);
+		}
+	});
+
+	/* Room listing events ***************************************************/
 	socket.on("room list", (resp) => {
 		UpdateConsole("Received rooms", LOG_LEVEL.DEBUG);
 		// TODO: Make this update the roomlist instead of add to it
@@ -52,9 +75,11 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		});
 	});
 	socket.on("room message posted", (resp) => {
-		const message = `${resp.characterName}: ${resp.message}`;
-		UpdateConsole(message, LOG_LEVEL.DEBUG);
-		AddMessageToPage(resp.roomName, message);
+		const { characterName, message, roomName } = resp.data;
+		if (!blockedList.has(characterName)) {
+			UpdateConsole(`${characterName}: ${message}`, LOG_LEVEL.DEBUG);
+			AddMessageToPage(roomName, `${characterName}: ${message}`);
+		}
 	});
 	socket.on("room info", (resp) => {
 		console.log("Received room info:", resp);
@@ -70,6 +95,7 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		UpdateConsole(`${resp.roomName} was removed`, LOG_LEVEL.DEBUG);
 	});
 
+	/* Chat room events ******************************************************/
 	socket.on("user left", (resp) => {
 		const { characterName, roomName } = resp;
 		const message = `${characterName} left ${roomName}`;
@@ -86,14 +112,26 @@ document.addEventListener("DOMContentLoaded", (arg) => {
 		UpdateConsole(message, LOG_LEVEL.DEBUG);
 	});
 
-	socket.on("user kicked", (resp) => console.log("Handling user kicked", resp));
-	socket.on("user banned", (resp) => console.log("Handling user banned", resp));
+	socket.on("user kicked", (resp) => {
+		const { roomName, message } = resp;
+		AddMessageToPage(roomName, message);
+	});
+	socket.on("user banned", (resp) => {
+		const { roomName, message } = resp;
+		AddMessageToPage(roomName, message);
+	});
 
-	socket.on("user unbanned", (resp) => console.log("Handling user unbanned", resp));
+	socket.on("user unbanned", (resp) => {
+		const { roomName, message } = resp;
+		AddMessageToPage(roomName, message);
+	});
 
 	socket.on("room error", (resp) => console.log("Handling room error", resp));
 
-	socket.on("kicked", (resp) => console.log("Handling kicked", resp));
+	socket.on("kicked", (resp) => {
+		const { characterName, roomName } = resp;
+		leaveRoom(roomName, characterName);
+	});
 });
 
 function getRooms() {
@@ -121,7 +159,7 @@ function createRoom(roomName, characterName, description = "", privateRoom = fal
 				charactersInRooms[characterName].add(roomName);
 				AddToSelect("room-select", roomName, roomName);
 				AddToSelect("room-list-select", roomName, roomName);
-				CreateMessagePage(roomName);
+				createMessagePage(roomName);
 				AddMessageToPage(roomName, `You joined ${roomName} as ${characterName}`);
 				document
 					.querySelectorAll(`#room-select > option[value="${roomName}"]`)[0]
@@ -157,10 +195,10 @@ function joinRoom(roomName, characterName, password = "") {
 			return;
 		}
 		charactersInRooms[characterName].add(roomName);
-		if (!(roomName in joinedRooms)) {
+		if (!(roomName in joinedRooms) || joinedRooms[roomName] == 0) {
 			joinedRooms[roomName] = 1;
 			AddToSelect("room-select", roomName, roomName);
-			CreateMessagePage(roomName);
+			createMessagePage(roomName);
 			createUserList(response.data.users, roomName);
 		} else {
 			addToUserList(characterName, roomName);
@@ -189,6 +227,7 @@ function leaveRoom(roomName, characterName) {
 			RemoveInSelect("room-select", roomName, roomName);
 			removeUserList(roomName);
 			DeleteMessagePage(roomName);
+			joinedRooms[roomName] = 0;
 		}
 		UpdateConsole(`${characterName} left ${roomName}`, LOG_LEVEL.DEBUG);
 	});
@@ -250,3 +289,19 @@ function updateRoomSettings(roomName, modName, roomSettings) {
 		console.log("mod action acked", response);
 	});
 }
+
+function sendDirectMessage(characterName, targetName, message) {}
+
+function sendFriendRequest(characterName, targetName) {}
+
+function blockUser(targetName) {
+	let updateData = {
+		targetName: targetName,
+	};
+
+	socket.emit("block user", updateData, (response) => {
+		console.log("block user acked", response);
+	});
+}
+
+let socketIOHandlers = (function () {})();
